@@ -1,0 +1,89 @@
+::-webkit-scrollbar {
+    display: none;
+}
+
+body {
+    background-color: gray;
+    margin: 0 0 0 0;
+}
+
+div#top {
+    display: flex;
+    justify-content: space-between;
+    position: fixed;
+    width: 100%;
+    z-index: 9999;
+}
+
+div#bottom {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+}
+
+div#top_left {
+    text-align: end;
+}
+
+div#top_right {
+    text-align: end;
+}
+
+div#bottom_right {
+    overflow-y: scroll;
+    text-align: end;
+}
+
+#messegeBottom {
+    background-color: black;
+    color: white;
+}
+
+#voice {
+    background-color: black;
+    color: white;
+}
+
+.voteRoom {
+    text-align: left;
+    background-color: white;
+}
+
+#voteRooms {
+    text-align: left;
+    background-color: white;
+}
+
+#createVoteRoom {
+    text-align: left;
+    background-color: white;
+}
+
+option {
+    color: black;
+}
+
+.border-radius-5 {
+    border-radius: 5px;
+}
+
+.border-radius-10 {
+    border-radius: 10px;
+}
+
+.border-none {
+    border: 0px;
+}
+
+textarea {
+    resize: none;
+}
+
+.bg-gainsboro {
+    background-color:gainsboro;
+}
+
+#caption {
+    margin-top: -60px;
+    text-align: center;
+}

@@ -58,6 +58,7 @@ recognition.lang = 'zh-TW'
 recognition.continuous = true
 recognition.interimResults = true
 const captionSelect = document.querySelector('#captionSelect')
+const video_start = document.querySelector('#video_start')
 var cameraStream
 var screenStream
 var shareId

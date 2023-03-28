@@ -59,6 +59,11 @@ div#bottom_right {
     background-color: white;
 }
 
+#filePage {
+    text-align: left;
+    background-color: white;
+}
+
 option {
     color: black;
 }

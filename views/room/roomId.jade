@@ -33,7 +33,10 @@ html(lang="en")
                     br             
                     button#voteButton.border-radius-5.border-none 投票
                     | &nbsp;&nbsp;
-                    br             
+                    br              
+                    button#fileButton.border-radius-5.border-none 檔案
+                    | &nbsp;&nbsp;
+                    br          
                     button#captionButton.border-radius-5.border-none 字幕
                     | &nbsp;&nbsp;
                     br  
@@ -49,6 +52,7 @@ html(lang="en")
                         | 鏡頭:
                         select#cameraSelect.border-radius-5.border-none
                         | &nbsp;&nbsp; 
+                    br
         br
         br
         #bottom
@@ -85,6 +89,11 @@ html(lang="en")
                     #inputVoteOptions.border-none 
                     br
                     button#SendcCeateVote.border-radius-5.border-none 送出
+                
+                #filePage.border-radius-10(style='display: none;')
+                    input#uploadFile(type="file")
+                    br
+                    button#sendFile.border-radius-5.border-none 上傳
     
     |<script>
     !='ROOM_ID = "'+roomId+'"'

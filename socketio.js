@@ -5,6 +5,7 @@ var roomVote = []
 let mysql = require('mysql');
 let config = require('./config');
 let connection = mysql.createConnection(config);
+const fs = require('fs');
 
 socketio.getSocketio = (server) => {
     var io = socket_io(server)
@@ -96,6 +97,16 @@ socketio.getSocketio = (server) => {
 
                         socket.on('caption', (captionText) => {
                             socket.to(roomId).emit('caption', userId, captionText)
+                        })
+
+                        socket.on('uploadFile', (fileName, fileType, fileData) => {
+                            // console.log(fileName + ' ' + fileType)
+                            // console.log(fileData)
+                            fs.writeFile(`/public/file/${fileName}`, fileData, err => {
+                                if(err) {
+                                    console.log(err)
+                                }
+                            })
                         })
 
                         socket.on('stopStream', () => {

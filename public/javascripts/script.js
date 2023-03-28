@@ -11,6 +11,8 @@ const cameraPeer = new Peer(undefined, {
     secure: true,
     port: '3003',
 })
+
+const ip = '127.0.0.1'
 const peers = []
 var userName = ''
 var messegeFlag = 1
@@ -49,6 +51,11 @@ var voteRoomFlag = 0
 const returnVote = document.querySelector('#returnVote')
 var voteChooseFlag = []
 var votes = []
+const fileButton = document.querySelector('#fileButton')
+const filePage = document.querySelector('#filePage')
+var filePageFlag = 0
+const uploadFile = document.querySelector('#uploadFile')
+const sendFile = document.querySelector('#sendFile')
 const captionButton = document.querySelector('#captionButton')
 const caption = document.querySelector('#caption')
 var captionFlag = 0
@@ -70,7 +77,7 @@ var options = {
 }
 
 const change_size = () => {
-    if (messegeFlag || staffFlag || voteFlag || createVoteFlag || voteRoomFlag) {
+    if (messegeFlag || staffFlag || voteFlag || createVoteFlag || voteRoomFlag || filePageFlag) {
         bottom_left.style.width = document.documentElement.clientWidth * 0.8 + 'px'
         video.width = document.documentElement.clientWidth * 0.8
 
@@ -90,6 +97,8 @@ const change_size = () => {
     voteRooms.style.width = bottom_right.style.width
     createVoteRoom.style.height = bottom_right.style.height
     createVoteRoom.style.width = bottom_right.style.width
+    filePage.style.height = bottom_right.style.height
+    filePage.style.width = bottom_right.style.width
     for (var i = 1; i <= voteNum; i++) {
         document.querySelector(`#voteRoom${i}`).style.height = bottom_right.style.height
         document.querySelector(`#voteRoom${i}`).style.width = bottom_right.style.width
@@ -201,6 +210,37 @@ returnVote.addEventListener('click', () => {
     voteButton.click()
 })
 
+fileButton.addEventListener('click', () => {
+    if (filePageFlag) {
+        clearButtonRight()
+    }
+    else {
+        clearButtonRight()
+        filePageFlag = 1
+        filePage.style.display = 'block'
+        fileButton.style.backgroundColor = 'black'
+        fileButton.style.color = 'white'
+    }
+    change_size()
+})
+
+sendFile.addEventListener('click', () => {
+    // console.log(uploadFile.files[0].name)
+    let fileName = uploadFile.files[0].name
+    let fileType = uploadFile.files[0].type
+    let fileReader = new FileReader()
+    fileReader.readAsArrayBuffer(uploadFile.files[0])
+    fileReader.onload = (e) => {
+        // console.log(e.target.result)
+        socket.emit('uploadFile', fileName, fileType, e.target.result)
+        // const blob = new Blob([e.target.result], {type: fileType})
+        // const downloadLink = document.createElement('a')
+        // downloadLink.href = window.URL.createObjectURL(blob)
+        // downloadLink.download = fileName
+        // downloadLink.click()
+    }
+})
+
 captionButton.addEventListener('click', () => {
     if (captionFlag) {
         caption.style.display = 'none'
@@ -238,6 +278,7 @@ recognition.onresult = function (event) {
         }
     }
 }
+
 const clearButtonRight = () => {
     messegeFlag = 0
     messege.style.display = 'none'
@@ -253,6 +294,10 @@ const clearButtonRight = () => {
     voteButton.style.color = 'black'
     createVoteFlag = 0
     createVoteRoom.style.display = 'none'
+    fileButton.style.backgroundColor = 'white'
+    fileButton.style.color = 'black'
+    filePageFlag = 0
+    filePage.style.display = 'none'
     if (voteNum >= 1) {
         for (var i = 1; i < voteNum; i++) {
             document.querySelector(`#voteRoom${i}`).style.display = 'none'
@@ -265,6 +310,9 @@ myPeer.on('open', id => {
     cameraPeer.on('open', cameraId => {
         // console.log('myId: ' + id + ' cameraId: ' + cameraId)
         var sessionId = document.cookie.replace(/(?:(?:^|.*;\s*)PHPSESSID*\=\s*([^;]*).*$)|^.*$/, "$1")
+        if(sessionId == '') {
+            parent.window.location.assign(`http://${ip}/htmlPhp/loginpage.php`)
+        }
         socket.emit('sessionId', sessionId);
         socket.on('name', myName => {
             userName = myName

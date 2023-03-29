@@ -7,6 +7,8 @@ let config = require('./config');
 let connection = mysql.createConnection(config);
 const fs = require('fs');
 
+const courseId = 1
+
 socketio.getSocketio = (server) => {
     var io = socket_io(server)
 
@@ -102,10 +104,23 @@ socketio.getSocketio = (server) => {
                         socket.on('uploadFile', (fileName, fileType, fileData) => {
                             // console.log(fileName + ' ' + fileType)
                             // console.log(fileData)
-                            fs.writeFile(`/public/file/${fileName}`, fileData, err => {
-                                if(err) {
+                            if (!fs.existsSync(`./public/files/${roomId}`))
+                                fs.mkdirSync(`./public/files/${roomId}`)
+                            if (!fs.existsSync(`./public/files/${roomId}/${courseId}`))
+                                fs.mkdirSync(`./public/files/${roomId}/${courseId}`)
+
+                            fs.writeFile(`./public/files/${roomId}/${courseId}/${fileName}`, fileData, err => {
+                                if (err) {
                                     console.log(err)
                                 }
+
+                                fs.readFile(`./public/files/${roomId}/${courseId}/${fileName}`, (err, data) => {
+                                    if(err){
+                                        console.error(err)
+                                        return
+                                    }
+                                    socket.emit('downloadFile', fileName, fileType, data)
+                                })
                             })
                         })
 

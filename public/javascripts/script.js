@@ -231,13 +231,7 @@ sendFile.addEventListener('click', () => {
     let fileReader = new FileReader()
     fileReader.readAsArrayBuffer(uploadFile.files[0])
     fileReader.onload = (e) => {
-        // console.log(e.target.result)
         socket.emit('uploadFile', fileName, fileType, e.target.result)
-        // const blob = new Blob([e.target.result], {type: fileType})
-        // const downloadLink = document.createElement('a')
-        // downloadLink.href = window.URL.createObjectURL(blob)
-        // downloadLink.download = fileName
-        // downloadLink.click()
     }
 })
 
@@ -523,6 +517,14 @@ myPeer.on('open', id => {
                 if (captionSelect.value == userId) {
                     caption.innerHTML = captionText
                 }
+            })
+            
+            socket.on('downloadFile', (fileName, fileType, fileData) => {
+                const blob = new Blob([fileData], {type: fileType})
+                const downloadLink = document.createElement('a')
+                downloadLink.href = window.URL.createObjectURL(blob)
+                downloadLink.download = fileName
+                downloadLink.click()
             })
     
             socket.on('stopStream', () => {

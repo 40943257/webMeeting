@@ -293,7 +293,7 @@ const clearButtonRight = () => {
     filePageFlag = 0
     filePage.style.display = 'none'
     if (voteNum >= 1) {
-        for (var i = 1; i < voteNum; i++) {
+        for (var i = 1; i <= voteNum; i++) {
             document.querySelector(`#voteRoom${i}`).style.display = 'none'
         }
     }

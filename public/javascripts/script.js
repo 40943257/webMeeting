@@ -255,7 +255,11 @@ recognition.onstart = () => { // 開始辨識
 };
 
 recognition.onend = () => { // 辨識完成
-    recognizing = false // 設定為「非辨識中」
+    if(recognizing){
+        recognition.start()
+        return
+    }
+    console.log('stop')
 };
 
 recognition.onresult = function (event) {
@@ -264,11 +268,14 @@ recognition.onresult = function (event) {
     // 將中間結果和最終結果分開處理
     for (var i = event.resultIndex; i < event.results.length; ++i) {
         if (!event.results[i].isFinal) {
-            socket.emit('caption', event.results[i][0].transcript)
-            if (captionSelect.value == 'my') {
-                console.log('123')
-                caption.innerHTML = event.results[i][0].transcript
-            }
+            socket.emit('caption', false, event.results[i][0].transcript)
+        }
+        else {
+            socket.emit('caption', true, event.results[i][0].transcript)
+        }
+        
+        if (captionSelect.value == 'my') {
+            caption.innerHTML = event.results[i][0].transcript
         }
     }
 }
@@ -750,6 +757,8 @@ const microphoneStop = () => {
         })
         cameraStream = null
     }
+    recognition.stop()
+    recognizing = false
     microphone.style.backgroundColor = 'white'
     microphone.style.color = 'black'
 }

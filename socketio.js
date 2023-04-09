@@ -21,7 +21,8 @@ socketio.getSocketio = (server) => {
                 }
                 // console.log(results[0]['userAccount']);
 
-                let sql = `SELECT * FROM userinfo WHERE userAccount = '${results[0]["userAccount"]}'`
+                const userAccount = results[0]["userAccount"]
+                let sql = `SELECT * FROM userinfo WHERE userAccount = '${userAccount}'`
                 connection.query(sql, [true], (error, results, fields) => {
                     if (error) {
                         return console.error(error.message);
@@ -97,8 +98,33 @@ socketio.getSocketio = (server) => {
                             }
                         })
 
-                        socket.on('caption', (captionText) => {
+                        socket.on('caption', (isFinal, captionText) => {
                             socket.to(roomId).emit('caption', userId, captionText)
+
+                            if (isFinal) {
+                                if (!fs.existsSync(`./public/files/${roomId}`))
+                                    fs.mkdirSync(`./public/files/${roomId}`)
+                                if (!fs.existsSync(`./public/files/${roomId}/${courseId}`))
+                                    fs.mkdirSync(`./public/files/${roomId}/${courseId}`)
+
+                                fs.writeFile(`./public/files/${roomId}/${courseId}/${userAccount}.txt`, captionText, { flag: 'a' }, err => {
+                                    if (err) {
+                                        console.log(err)
+                                    }
+                                })
+
+                                let sql = `SELECT * FROM speachrecognitionresults WHERE courseId = '${courseId}' && userAccount = '${userAccount}'`;
+                                connection.query(sql, [true], (error, results, fields) => {
+                                    if (error) {
+                                        return console.error(error.message);
+                                    }
+                                    if (Object.keys(results).length == 0) {
+                                        let sql = `INSERT INTO speachrecognitionresults(courseId, userAccount, filePath)
+                                                    VALUES('${courseId}', '${userAccount}', './public/files/${roomId}/${courseId}/${userAccount}.txt')`
+                                        connection.query(sql);
+                                    }
+                                });
+                            }
                         })
 
                         socket.on('uploadFile', (fileName, fileType, fileData) => {
@@ -115,7 +141,7 @@ socketio.getSocketio = (server) => {
                                 }
 
                                 fs.readFile(`./public/files/${roomId}/${courseId}/${fileName}`, (err, data) => {
-                                    if(err){
+                                    if (err) {
                                         console.error(err)
                                         return
                                     }

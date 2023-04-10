@@ -6,6 +6,7 @@ let mysql = require('mysql');
 let config = require('./config');
 let connection = mysql.createConnection(config);
 const fs = require('fs');
+const path = require('path')
 
 const courseId = 1
 
@@ -58,7 +59,18 @@ socketio.getSocketio = (server) => {
                             cameraId: cameraId
                         }
                         roomStaff[roomId].push(userInfo)
-                        console.log(roomStaff[roomId])
+                        // console.log(roomStaff[roomId])
+
+                        let sql = `SELECT * FROM courseFile WHERE courseId='1'`;
+                        connection.query(sql, [true], (error, results, fields) => {
+                            if (error) {
+                                return console.error(error.message);
+                            }
+
+                            results.forEach(result => {
+                                socket.emit('courseFile', result['fileName'])
+                            })
+                        });
 
                         socket.on('message', (message) => {
                             console.log(message)
@@ -136,19 +148,38 @@ socketio.getSocketio = (server) => {
                                 fs.mkdirSync(`./public/files/${courseId}`)
                             if (!fs.existsSync(`./public/files/${courseId}/${roomId}`))
                                 fs.mkdirSync(`./public/files/${courseId}/${roomId}`)
-
+                            if (fs.existsSync(`./public/files/${courseId}/${roomId}/${fileName}`)) {
+                                const parsed = path.parse(fileName)
+                                fileName = `${parsed.name}_${Date.now()}${parsed.ext}`
+                                console.log(fileName)
+                            }
                             fs.writeFile(`./public/files/${courseId}/${roomId}/${fileName}`, fileData, err => {
                                 if (err) {
                                     console.log(err)
                                 }
+                                let sql = `INSERT INTO coursefile(courseId, fileName, fileType, filePath)
+                                                    VALUES('${courseId}', '${fileName}', '${fileType}', './public/files/${courseId}/${roomId}/${fileName}')`
+                                connection.query(sql);
+                                io.to(roomId).emit('courseFile', fileName)
+                            })
+                        })
 
-                                fs.readFile(`./public/files/${courseId}/${roomId}/${fileName}`, (err, data) => {
-                                    if (err) {
-                                        console.error(err)
-                                        return
+                        socket.on('downloadFile', fileName => {
+                            fs.readFile(`./public/files/${courseId}/${roomId}/${fileName}`, (err, data) => {
+                                if (err) {
+                                    console.error(err)
+                                    return
+                                }
+
+                                let sql = `SELECT * FROM courseFile WHERE courseId = '${courseId}' && fileName = '${fileName}'`;
+                                connection.query(sql, [true], (error, results, fields) => {
+                                    if (error) {
+                                        return console.error(error.message);
                                     }
-                                    socket.emit('downloadFile', fileName, fileType, data)
-                                })
+                                    if (Object.keys(results).length == 1) {
+                                        socket.emit('downloadFile', fileName, results['fileType'], data)
+                                    }
+                                });
                             })
                         })
 

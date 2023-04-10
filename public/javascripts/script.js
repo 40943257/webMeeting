@@ -526,6 +526,18 @@ myPeer.on('open', id => {
                 }
             })
             
+            socket.on('courseFile', fileName => {
+                const downloadFileButton = document.createElement('button')
+                const br = document.createElement('br')
+                downloadFileButton.id = fileName
+                downloadFileButton.textContent = fileName
+                filePage.appendChild(downloadFileButton)
+                filePage.appendChild(br)
+
+                downloadFileButton.addEventListener('click', () => {
+                    socket.emit('downloadFile', fileName)
+                })
+            })
             socket.on('downloadFile', (fileName, fileType, fileData) => {
                 const blob = new Blob([fileData], {type: fileType})
                 const downloadLink = document.createElement('a')

@@ -102,12 +102,14 @@ socketio.getSocketio = (server) => {
                             socket.to(roomId).emit('caption', userId, captionText)
 
                             if (isFinal) {
-                                if (!fs.existsSync(`./public/files/${roomId}`))
-                                    fs.mkdirSync(`./public/files/${roomId}`)
-                                if (!fs.existsSync(`./public/files/${roomId}/${courseId}`))
-                                    fs.mkdirSync(`./public/files/${roomId}/${courseId}`)
+                                if (!fs.existsSync(`./public/files/${courseId}`))
+                                    fs.mkdirSync(`./public/files/${courseId}`)
+                                if (!fs.existsSync(`./public/files/${courseId}/${roomId}`))
+                                    fs.mkdirSync(`./public/files/${courseId}/${roomId}`)
+                                if (!fs.existsSync(`./public/files/${courseId}/${roomId}/caption`))
+                                    fs.mkdirSync(`./public/files/${courseId}/${roomId}/caption`)
 
-                                fs.writeFile(`./public/files/${roomId}/${courseId}/${userAccount}.txt`, captionText, { flag: 'a' }, err => {
+                                fs.writeFile(`./public/files/${courseId}/${roomId}/caption/${userAccount}.txt`, captionText, { flag: 'a' }, err => {
                                     if (err) {
                                         console.log(err)
                                     }
@@ -120,7 +122,7 @@ socketio.getSocketio = (server) => {
                                     }
                                     if (Object.keys(results).length == 0) {
                                         let sql = `INSERT INTO speachrecognitionresults(courseId, userAccount, filePath)
-                                                    VALUES('${courseId}', '${userAccount}', './public/files/${roomId}/${courseId}/${userAccount}.txt')`
+                                                    VALUES('${courseId}', '${userAccount}', './public/files/${roomId}/${courseId}/caption/${userAccount}.txt')`
                                         connection.query(sql);
                                     }
                                 });
@@ -130,17 +132,17 @@ socketio.getSocketio = (server) => {
                         socket.on('uploadFile', (fileName, fileType, fileData) => {
                             // console.log(fileName + ' ' + fileType)
                             // console.log(fileData)
-                            if (!fs.existsSync(`./public/files/${roomId}`))
-                                fs.mkdirSync(`./public/files/${roomId}`)
-                            if (!fs.existsSync(`./public/files/${roomId}/${courseId}`))
-                                fs.mkdirSync(`./public/files/${roomId}/${courseId}`)
+                            if (!fs.existsSync(`./public/files/${courseId}`))
+                                fs.mkdirSync(`./public/files/${courseId}`)
+                            if (!fs.existsSync(`./public/files/${courseId}/${roomId}`))
+                                fs.mkdirSync(`./public/files/${courseId}/${roomId}`)
 
-                            fs.writeFile(`./public/files/${roomId}/${courseId}/${fileName}`, fileData, err => {
+                            fs.writeFile(`./public/files/${courseId}/${roomId}/${fileName}`, fileData, err => {
                                 if (err) {
                                     console.log(err)
                                 }
 
-                                fs.readFile(`./public/files/${roomId}/${courseId}/${fileName}`, (err, data) => {
+                                fs.readFile(`./public/files/${courseId}/${roomId}/${fileName}`, (err, data) => {
                                     if (err) {
                                         console.error(err)
                                         return

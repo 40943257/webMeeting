@@ -606,8 +606,21 @@ microphone.addEventListener('click', () => {
 })
 
 navigator.mediaDevices.getUserMedia(options).then(() => {
+    options.video = false
+    options.audio = false
+
+    getDevices()
+})
+
+navigator.mediaDevices.addEventListener('devicechange', ()=> {
+    getDevices()
+})
+
+const getDevices = () => {
     navigator.mediaDevices.enumerateDevices().then(devices => {
         // console.log(devices)
+        cameraSelect.innerHTML = ''
+        microphoneSelect.innerHTML = ''
 
         devices.forEach(device => {
             if (device.deviceId === 'default' || device.deviceId === 'communications') {
@@ -624,11 +637,8 @@ navigator.mediaDevices.getUserMedia(options).then(() => {
                 cameraSelect.appendChild(option)
             }
         })
-
-        options.video = false
-        options.audio = false
     })
-})
+}
 
 microphoneSelect.addEventListener('change', () => {
     if (cameraStream) {

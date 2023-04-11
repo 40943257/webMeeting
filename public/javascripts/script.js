@@ -66,6 +66,7 @@ recognition.continuous = true
 recognition.interimResults = true
 const captionSelect = document.querySelector('#captionSelect')
 const video_start = document.querySelector('#video_start')
+const stopMeetingButton = document.querySelector('#stopMeetingButton')
 var cameraStream
 var screenStream
 var shareId
@@ -306,6 +307,10 @@ const clearButtonRight = () => {
     }
     voteRoomFlag = 0
 }
+
+stopMeetingButton.addEventListener('click', () => {
+    socket.emit('stopMeeting')
+})
 
 myPeer.on('open', id => {
     cameraPeer.on('open', cameraId => {
@@ -563,6 +568,10 @@ myPeer.on('open', id => {
                     }
                 }
                 // console.log(peers)
+            })
+
+            socket.on('stopMeeting', () => {
+                parent.window.location.assign(`http://${ip}/htmlPhp/user.php`)
             })
         })
             

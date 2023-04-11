@@ -6,7 +6,7 @@ let mysql = require('mysql');
 let config = require('./config');
 let connection = mysql.createConnection(config);
 const fs = require('fs');
-const path = require('path')
+const path = require('path');
 
 const courseId = 1
 
@@ -84,7 +84,7 @@ socketio.getSocketio = (server) => {
                         socket.on('getVoteNum', (voteName) => {
                             const num = ++roomVote[roomId].voteNum
                             socket.emit('voteNum', num)
-                            roomVote[roomId][num] = []
+                            roomVote[roomId][num] = {}
                             roomVote[roomId][num].num = num
                             roomVote[roomId][num].name = voteName
                             roomVote[roomId][num].option = []
@@ -98,7 +98,7 @@ socketio.getSocketio = (server) => {
                                 numOfVotes: 0
                             }
                             roomVote[roomId][n].option.push(voteOption)
-                            console.log(roomVote[roomId])
+                            // console.log(roomVote[roomId])
                         })
 
                         socket.on('voteChoose', (n, choose) => {
@@ -159,7 +159,7 @@ socketio.getSocketio = (server) => {
                                 }
                                 let sql = `INSERT INTO coursefile(courseId, fileName, fileType, filePath)
                                                     VALUES('${courseId}', '${fileName}', '${fileType}', './public/files/${courseId}/${roomId}/${fileName}')`
-                                connection.query(sql);
+                                connection.query(sql)
                                 io.to(roomId).emit('courseFile', fileName)
                             })
                         })
@@ -196,8 +196,33 @@ socketio.getSocketio = (server) => {
                             if (n != -1) {
                                 roomStaff[roomId].splice(n, 1)
                             }
-                            console.log(roomStaff[roomId])
+                            // console.log(roomStaff[roomId])
                             socket.to(roomId).emit('user-disconnected', userId)
+                        })
+
+                        socket.on('stopMeeting', () => {
+                            io.to(roomId).emit('stopMeeting')
+                            console.log(roomVote[roomId])
+                            if (roomVote[roomId].voteNum > 0) {
+                                if (!fs.existsSync(`./public/files/${courseId}`))
+                                    fs.mkdirSync(`./public/files/${courseId}`)
+                                if (!fs.existsSync(`./public/files/${courseId}/${roomId}`))
+                                    fs.mkdirSync(`./public/files/${courseId}/${roomId}`)
+                                if (!fs.existsSync(`./public/files/${courseId}/${roomId}/vote`))
+                                    fs.mkdirSync(`./public/files/${courseId}/${roomId}/vote`)
+                                const fileName = `vote_${Date.now()}.json`
+
+                                fs.writeFile(`./public/files/${courseId}/${roomId}/vote/${fileName}`, JSON.stringify(roomVote[roomId]), err => {
+                                    if(err){
+                                        console.error(err)
+                                        return
+                                    }
+                                
+                                    let sql = `INSERT INTO coursevote(courseId, fileName, filePath)
+                                                        VALUES('${courseId}', '${fileName}', './public/files/${courseId}/${roomId}/vote')`
+                                    connection.query(sql)
+                                })
+                            }
                         })
                     })
                 })

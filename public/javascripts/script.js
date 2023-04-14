@@ -66,6 +66,13 @@ recognition.continuous = true
 recognition.interimResults = true
 const captionSelect = document.querySelector('#captionSelect')
 const video_start = document.querySelector('#video_start')
+var video_startFlag = false
+var recorder
+var chunks
+var mixStream
+var audioContext
+var destination
+var gainNode
 const stopMeetingButton = document.querySelector('#stopMeetingButton')
 var cameraStream
 var screenStream
@@ -256,7 +263,7 @@ recognition.onstart = () => { // 開始辨識
 };
 
 recognition.onend = () => { // 辨識完成
-    if(recognizing){
+    if (recognizing) {
         recognition.start()
         return
     }
@@ -274,7 +281,7 @@ recognition.onresult = function (event) {
         else {
             socket.emit('caption', true, event.results[i][0].transcript)
         }
-        
+
         if (captionSelect.value == 'my') {
             caption.innerHTML = event.results[i][0].transcript
         }
@@ -316,7 +323,7 @@ myPeer.on('open', id => {
     cameraPeer.on('open', cameraId => {
         // console.log('myId: ' + id + ' cameraId: ' + cameraId)
         var sessionId = document.cookie.replace(/(?:(?:^|.*;\s*)PHPSESSID*\=\s*([^;]*).*$)|^.*$/, "$1")
-        if(sessionId == '') {
+        if (sessionId == '') {
             parent.window.location.assign(`http://${ip}/htmlPhp/loginpage.php`)
         }
         socket.emit('sessionId', sessionId);
@@ -329,7 +336,7 @@ myPeer.on('open', id => {
             option.text = userName
             captionSelect.appendChild(option)
             socket.emit('join-room', ROOM_ID, id, cameraId)
-    
+
             socket.on('connection', (userId, userCameraId, name) => {
                 // console.log('user: ' + userId + ' connection')
                 if (screenStream) {
@@ -365,17 +372,19 @@ myPeer.on('open', id => {
                 peers.push(userInfo)
                 // console.log(peers)
             })
-    
+
             myPeer.on('call', call => {
                 call.answer()
                 call.on('stream', userStream => {
+                    if(video_startFlag)
+                        audioContext.createMediaStreamSource(userStream).connect(gainNode)
                     video.srcObject = userStream
                     let playPromise = video.play()
                     if (playPromise !== undefined) {
                         playPromise.then(() => {
                             video.play()
                         }).catch(() => {
-    
+
                         })
                     }
                     if (!voiceFlag) {
@@ -383,36 +392,42 @@ myPeer.on('open', id => {
                     }
                 })
             })
-    
+
             cameraPeer.on('call', call => {
                 call.answer()
                 const cameraVideo = (document.getElementById(call.peer)).querySelector('video')
                 call.on('stream', stream => {
                     cameraVideo.srcObject = stream
+                    if(video_startFlag)
+                        audioContext.createMediaStreamSource(stream).connect(gainNode)
+                    if (voiceFlag)
+                        stream.getAudioTracks().forEach(track => track.enabled = false)
+                    else
+                        stream.getAudioTracks().forEach(track => track.enabled = true)
                     let playPromise = cameraVideo.play()
                     if (playPromise !== undefined) {
                         playPromise.then(() => {
                             cameraVideo.play()
                         }).catch(() => {
-    
+
                         })
                     }
-    
+
                     socket.on('stopCameraStream', () => {
                         cameraVideo.srcObject = null
                     })
                 })
             })
-    
+
             socket.on('message', (message) => {
                 // console.log(message)
                 txtShow.value = txtShow.value + message + '\n'
             })
-    
+
             socket.on('shareId', userId => {
                 shareId = userId
             })
-    
+
             socket.on('voteNum', num => {
                 const voteOptions = document.querySelectorAll('#vote_option')
                 voteOptions.forEach(voteOption => {
@@ -429,7 +444,7 @@ myPeer.on('open', id => {
                 numOfVoteOptions[0].selected = true
                 voteButton.click()
             })
-    
+
             socket.on('vote', (num, vote_name, vote__option, numOf_Votes) => {
                 // console.log(n + ' ' + vote__option)
                 if (vote__option == 'end') {
@@ -516,7 +531,7 @@ myPeer.on('open', id => {
                     votes[num].option.push(voteOptionContext)
                 }
             })
-    
+
             socket.on('voteChoose', (num, vote_name, choose, numOfVotes) => {
                 // console.log(num + ' ' + vote_name + ' ' + choose + ' ' + numOfVotes)
                 const n = votes[num].option.map(x => x.name).indexOf(choose)
@@ -524,13 +539,13 @@ myPeer.on('open', id => {
                     votes[num].option[n].numOfVotes = numOfVotes
                 }
             })
-    
+
             socket.on('caption', (userId, captionText) => {
                 if (captionSelect.value == userId) {
                     caption.innerHTML = captionText
                 }
             })
-            
+
             socket.on('courseFile', fileName => {
                 const downloadFileButton = document.createElement('button')
                 const br = document.createElement('br')
@@ -544,17 +559,17 @@ myPeer.on('open', id => {
                 })
             })
             socket.on('downloadFile', (fileName, fileType, fileData) => {
-                const blob = new Blob([fileData], {type: fileType})
+                const blob = new Blob([fileData], { type: fileType })
                 const downloadLink = document.createElement('a')
                 downloadLink.href = window.URL.createObjectURL(blob)
                 downloadLink.download = fileName
                 downloadLink.click()
             })
-    
+
             socket.on('stopStream', () => {
                 video.srcObject = null
             })
-    
+
             socket.on('user-disconnected', userId => {
                 const n = peers.map(x => x.id).indexOf(userId)
                 if (n != -1) {
@@ -574,7 +589,7 @@ myPeer.on('open', id => {
                 parent.window.location.assign(`http://${ip}/htmlPhp/user.php`)
             })
         })
-            
+
     })
 })
 
@@ -633,7 +648,7 @@ navigator.mediaDevices.getUserMedia(options).then(() => {
     getDevices()
 })
 
-navigator.mediaDevices.addEventListener('devicechange', ()=> {
+navigator.mediaDevices.addEventListener('devicechange', () => {
     getDevices()
 })
 
@@ -692,6 +707,8 @@ const sendCameraStream = () => {
                 camera.style.color = 'white'
             }
             if (options.audio) {
+                if(video_startFlag)
+                    audioContext.createMediaStreamSource(cameraStream).connect(gainNode)
                 if (recognizing == false) {
                     recognition.start()
                     recognizing = true
@@ -723,6 +740,8 @@ screen.addEventListener('click', () => {
             }).then(stream => {
                 video.srcObject = stream
                 screenStream = stream
+                if(video_startFlag)
+                    audioContext.createMediaStreamSource(screenStream).connect(gainNode)
                 video.muted = true
                 video.play()
                 sendStream(stream)
@@ -761,6 +780,66 @@ screen.addEventListener('click', () => {
 //         return
 //     }
 // })
+
+video_start.addEventListener('click', () => {
+    if (video_startFlag) {
+        recorder.stop()
+        video_startFlag = false
+        video_start.style.backgroundColor = 'white'
+        video_start.style.color = 'black'
+    }
+    else {
+        navigator.mediaDevices.getDisplayMedia({ video: true }).then(stream => {
+            mixStream = new MediaStream()
+            audioContext = new AudioContext()
+            destination = audioContext.createMediaStreamDestination()
+            gainNode = audioContext.createGain()
+            
+            mixStream.addTrack(stream.getVideoTracks()[0])
+            if (video.srcObject){
+                audioContext.createMediaStreamSource(video.srcObject).connect(gainNode)
+            }
+            if (cameraStream){
+                audioContext.createMediaStreamSource(cameraStream).connect(gainNode)
+            }
+            const userVideos = staff.querySelectorAll('video')
+            userVideos.forEach(userVideo => { 
+                audioContext.createMediaStreamSource(userVideo.srcObject).connect(gainNode)
+            })
+            gainNode.connect(destination)
+            mixStream.addTrack(destination.stream.getAudioTracks()[0])
+
+            chunks = []
+            recorder = new MediaRecorder(mixStream, {
+                mimeType: 'video/webm',
+                audioBitsPerSecond: 128000,
+                videoBitsPerSecond: 2500000}
+            )
+
+            recorder.ondataavailable = e => {
+                chunks.push(e.data)
+            }
+  
+            recorder.onstop = () => {
+                stream.getTracks().forEach(track => {
+                    track.stop()
+                })
+                const blob = new Blob(chunks, { type: 'video/webm' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = 'recoding.webm'
+                a.click()
+                URL.revokeObjectURL(url)
+            }
+
+            recorder.start()
+            video_startFlag = true
+            video_start.style.backgroundColor = 'black'
+            video_start.style.color = 'white'
+        })
+    }
+})
 
 const sendStream = (stream) => {
     peers.forEach(user => {
@@ -817,6 +896,7 @@ voice.addEventListener('click', () => {
         const userVideos = staff.querySelectorAll('video')
         userVideos.forEach(userVideo => {
             userVideo.muted = false
+            userVideo.srcObject.getAudioTracks().forEach(track => track.enabled = true)
         })
     }
     else {
@@ -827,6 +907,7 @@ voice.addEventListener('click', () => {
         const userVideos = staff.querySelectorAll('video')
         userVideos.forEach(userVideo => {
             userVideo.muted = true
+            userVideo.srcObject.getAudioTracks().forEach(track => track.enabled = false)
         })
     }
 })

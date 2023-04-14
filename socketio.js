@@ -61,7 +61,7 @@ socketio.getSocketio = (server) => {
                         roomStaff[roomId].push(userInfo)
                         // console.log(roomStaff[roomId])
 
-                        let sql = `SELECT * FROM courseFile WHERE courseId='1'`;
+                        let sql = `SELECT * FROM courseFile WHERE courseId='${courseId}' and courseLink = '${roomId}'`;
                         connection.query(sql, [true], (error, results, fields) => {
                             if (error) {
                                 return console.error(error.message);
@@ -133,8 +133,8 @@ socketio.getSocketio = (server) => {
                                         return console.error(error.message);
                                     }
                                     if (Object.keys(results).length == 0) {
-                                        let sql = `INSERT INTO speachrecognitionresults(courseId, userAccount, filePath)
-                                                    VALUES('${courseId}', '${userAccount}', './public/files/${roomId}/${courseId}/caption/${userAccount}.txt')`
+                                        let sql = `INSERT INTO speachrecognitionresults(courseId, courseLink, userAccount, filePath)
+                                                    VALUES('${courseId}', '${roomId}', '${userAccount}', './public/files/${roomId}/${courseId}/caption/${userAccount}.txt')`
                                         connection.query(sql);
                                     }
                                 });
@@ -157,8 +157,8 @@ socketio.getSocketio = (server) => {
                                 if (err) {
                                     console.log(err)
                                 }
-                                let sql = `INSERT INTO coursefile(courseId, fileName, fileType, filePath)
-                                                    VALUES('${courseId}', '${fileName}', '${fileType}', './public/files/${courseId}/${roomId}/${fileName}')`
+                                let sql = `INSERT INTO coursefile(courseId, courseLink, fileName, fileType, filePath)
+                                                    VALUES('${courseId}', '${roomId}', '${fileName}', '${fileType}', './public/files/${courseId}/${roomId}/${fileName}')`
                                 connection.query(sql)
                                 io.to(roomId).emit('courseFile', fileName)
                             })
@@ -171,7 +171,7 @@ socketio.getSocketio = (server) => {
                                     return
                                 }
 
-                                let sql = `SELECT * FROM courseFile WHERE courseId = '${courseId}' && fileName = '${fileName}'`;
+                                let sql = `SELECT * FROM courseFile WHERE courseId = '${courseId}' && courseLink = '${roomId}' && fileName = '${fileName}'`;
                                 connection.query(sql, [true], (error, results, fields) => {
                                     if (error) {
                                         return console.error(error.message);
@@ -218,8 +218,8 @@ socketio.getSocketio = (server) => {
                                         return
                                     }
                                 
-                                    let sql = `INSERT INTO coursevote(courseId, fileName, filePath)
-                                                        VALUES('${courseId}', '${fileName}', './public/files/${courseId}/${roomId}/vote')`
+                                    let sql = `INSERT INTO coursevote(courseId, courseLink, fileName, filePath)
+                                                        VALUES('${courseId}', '${roomId}', '${fileName}', './public/files/${courseId}/${roomId}/vote')`
                                     connection.query(sql)
                                 })
                             }

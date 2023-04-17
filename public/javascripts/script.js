@@ -21,6 +21,7 @@ const messegeButton = document.querySelector('#messegeButton')
 const staffButton = document.querySelector('#staffButton')
 const messege = document.querySelector('#messege')
 const video = document.querySelector('#video')
+video.volume = 0.5
 const txtShow = document.querySelector('#txtShow')
 const txtInput = document.querySelector('#txtInput')
 const btnSend = document.querySelector("#btnSend")
@@ -28,6 +29,7 @@ const camera = document.querySelector('#camera')
 const microphone = document.querySelector('#microphone')
 const screen = document.querySelector('#screen')
 const voice = document.querySelector('#voice')
+const voiceRange = document.querySelector('#voiceRange')
 const staff = document.querySelector('#staff')
 const bottom_left = document.querySelector('#bottom_left')
 const bottom_right = document.querySelector('#bottom_right')
@@ -35,6 +37,7 @@ const settingButton = document.querySelector('#settingButton')
 const setting = document.querySelector('#setting')
 const microphoneSelect = document.querySelector('#microphoneSelect')
 const cameraSelect = document.querySelector('#cameraSelect')
+const hornSelect = document.querySelector('#hornSelect')
 const voteButton = document.querySelector('#voteButton')
 const voteRooms = document.querySelector('#voteRooms')
 const voteForm = document.querySelector('#voteForm')
@@ -345,6 +348,9 @@ myPeer.on('open', id => {
                 const userDiv = document.createElement('div')
                 userDiv.id = userCameraId
                 const cameraVideo = document.createElement('video')
+                cameraVideo.srcObject = null
+                cameraVideo.setSinkId(hornSelect.value)
+                cameraVideo.volume = voiceRange.value / 100
                 if (voiceFlag) {
                     cameraVideo.muted = true
                 }
@@ -575,7 +581,8 @@ myPeer.on('open', id => {
                 if (n != -1) {
                     cameraId = peers[n].cameraId
                     peers.splice(n, 1)
-                    document.getElementById(cameraId).remove()
+                    const disUser = document.getElementById(cameraId)
+                    disUser.remove()
                     document.getElementById(`option_${userId}`).remove()
                     if (shareId == userId) {
                         video.srcObject = null
@@ -655,8 +662,12 @@ navigator.mediaDevices.addEventListener('devicechange', () => {
 const getDevices = () => {
     navigator.mediaDevices.enumerateDevices().then(devices => {
         // console.log(devices)
+        const selectCamera = cameraSelect.value
+        const selectMicrophone = microphoneSelect.value
+        const selectHorn = hornSelect.value
         cameraSelect.innerHTML = ''
         microphoneSelect.innerHTML = ''
+        hornSelect.innerHTML = ''
 
         devices.forEach(device => {
             if (device.deviceId === 'default' || device.deviceId === 'communications') {
@@ -672,7 +683,20 @@ const getDevices = () => {
                 option.text = device.label
                 cameraSelect.appendChild(option)
             }
+            else if (device.kind === 'audiooutput') {
+                option.text = device.label
+                hornSelect.appendChild(option)
+            }
         })
+
+        if(selectCamera)
+            cameraSelect.value = selectCamera
+
+        if(selectMicrophone)
+            microphoneSelect.value = selectMicrophone
+
+        if(selectHorn)
+            hornSelect.value = selectHorn
     })
 }
 
@@ -696,6 +720,12 @@ cameraSelect.addEventListener('change', () => {
         }
         sendCameraStream()
     }
+})
+
+hornSelect.addEventListener('change', () => {
+    document.querySelectorAll('video').forEach(element => {
+        element.setSinkId(hornSelect.value)
+    })
 })
 
 const sendCameraStream = () => {
@@ -804,7 +834,10 @@ video_start.addEventListener('click', () => {
             }
             const userVideos = staff.querySelectorAll('video')
             userVideos.forEach(userVideo => { 
-                audioContext.createMediaStreamSource(userVideo.srcObject).connect(gainNode)
+                if(userVideo.srcObject != null){
+                    console.log('123')
+                    audioContext.createMediaStreamSource(userVideo.srcObject).connect(gainNode)
+                }
             })
             gainNode.connect(destination)
             mixStream.addTrack(destination.stream.getAudioTracks()[0])
@@ -910,4 +943,10 @@ voice.addEventListener('click', () => {
             userVideo.srcObject.getAudioTracks().forEach(track => track.enabled = false)
         })
     }
+})
+
+voiceRange.addEventListener('input', () => {
+    document.querySelectorAll('video').forEach(element => {
+        element.volume = voiceRange.value / 100
+    })
 })

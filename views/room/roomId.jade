@@ -26,7 +26,10 @@ html(lang="en")
                 #setting.bg-gainsboro.border-radius-10.border-none(style='display: none;')
                     button#voice.border-radius-5.border-none 靜音
                     | &nbsp;&nbsp;
-                    br           
+                    div
+                        | 音量:
+                        input(type="range", min="0", max="100", value="50")#voiceRange
+                        | &nbsp;&nbsp;
                     button#staffButton.border-radius-5.border-none 成員
                     | &nbsp;&nbsp;
                     br            
@@ -53,6 +56,10 @@ html(lang="en")
                     div
                         | 鏡頭:
                         select#cameraSelect.border-radius-5.border-none
+                        | &nbsp;&nbsp; 
+                    div
+                        | 喇叭:
+                        select#hornSelect.border-radius-5.border-none
                         | &nbsp;&nbsp; 
                     br
         br

@@ -27,8 +27,12 @@ html(lang="en")
                     button#voice.border-radius-5.border-none 靜音
                     | &nbsp;&nbsp;
                     div
-                        | 音量:
+                        | 喇叭音量:
                         input(type="range", min="0", max="100", value="50")#voiceRange
+                        | &nbsp;&nbsp;
+                    div
+                        | 麥克風音量:
+                        input(type="range", min="0", max="100", value="50")#microphoneRange
                         | &nbsp;&nbsp;
                     button#staffButton.border-radius-5.border-none 成員
                     | &nbsp;&nbsp;

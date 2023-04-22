@@ -188,7 +188,7 @@ socketio.getSocketio = (server) => {
                         })
 
                         socket.on('stopCameraStream', () => {
-                            socket.to(roomId).emit('stopCameraStream')
+                            socket.to(roomId).emit('stopCameraStream', cameraId)
                         })
 
                         socket.on('disconnect', () => {

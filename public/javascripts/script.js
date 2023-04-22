@@ -30,6 +30,7 @@ const microphone = document.querySelector('#microphone')
 const screen = document.querySelector('#screen')
 const voice = document.querySelector('#voice')
 const voiceRange = document.querySelector('#voiceRange')
+const microphoneRange = document.querySelector('#microphoneRange')
 const staff = document.querySelector('#staff')
 const bottom_left = document.querySelector('#bottom_left')
 const bottom_right = document.querySelector('#bottom_right')
@@ -76,6 +77,11 @@ var mixStream
 var audioContext
 var destination
 var gainNode
+var microphoneAudioContext
+var microphoneGainNode
+var microphoneDestination
+var microphoneSource
+var screenSource
 const stopMeetingButton = document.querySelector('#stopMeetingButton')
 var cameraStream
 var screenStream
@@ -332,7 +338,7 @@ myPeer.on('open', id => {
         socket.emit('sessionId', sessionId);
         socket.on('name', myName => {
             userName = myName
-            console.log(userName)
+            // console.log(userName)
             const option = document.createElement('option')
             option.value = 'my'
             option.id = 'option_my'
@@ -382,8 +388,10 @@ myPeer.on('open', id => {
             myPeer.on('call', call => {
                 call.answer()
                 call.on('stream', userStream => {
-                    if(video_startFlag)
-                        audioContext.createMediaStreamSource(userStream).connect(gainNode)
+                    if (video_startFlag) {
+                        screenSource = audioContext.createMediaStreamSource(userStream)
+                        screenSource.connect(gainNode)
+                    }
                     video.srcObject = userStream
                     let playPromise = video.play()
                     if (playPromise !== undefined) {
@@ -404,8 +412,13 @@ myPeer.on('open', id => {
                 const cameraVideo = (document.getElementById(call.peer)).querySelector('video')
                 call.on('stream', stream => {
                     cameraVideo.srcObject = stream
-                    if(video_startFlag)
-                        audioContext.createMediaStreamSource(stream).connect(gainNode)
+                    const n = peers.map(x => x.cameraId).indexOf(call.id)
+                    if (video_startFlag) {
+                        if (n != -1) {
+                            peers[n].audioSource = audioContext.createMediaStreamSource(stream)
+                            peers[n].audioSource.connect(gainNode)
+                        }
+                    }
                     if (voiceFlag)
                         stream.getAudioTracks().forEach(track => track.enabled = false)
                     else
@@ -418,10 +431,6 @@ myPeer.on('open', id => {
 
                         })
                     }
-
-                    socket.on('stopCameraStream', () => {
-                        cameraVideo.srcObject = null
-                    })
                 })
             })
 
@@ -564,6 +573,7 @@ myPeer.on('open', id => {
                     socket.emit('downloadFile', fileName)
                 })
             })
+
             socket.on('downloadFile', (fileName, fileType, fileData) => {
                 const blob = new Blob([fileData], { type: fileType })
                 const downloadLink = document.createElement('a')
@@ -574,6 +584,22 @@ myPeer.on('open', id => {
 
             socket.on('stopStream', () => {
                 video.srcObject = null
+                if (screenSource) {
+                    screenSource.disconnect(gainNode)
+                }
+            })
+
+            socket.on('stopCameraStream', (userCameraId) => {
+                const userVideo = document.getElementById(userCameraId).querySelector('video')
+                userVideo.srcObject = null
+
+                if (video_startFlag) {
+                    const n = peers.map(x => x.cameraId).indexOf(userCameraId)
+                    if (n != -1) {
+                        peers[n].audioSource.disconnect(gainNode)
+                        peers[n].audioSource = null
+                    }
+                }
             })
 
             socket.on('user-disconnected', userId => {
@@ -689,13 +715,13 @@ const getDevices = () => {
             }
         })
 
-        if(selectCamera)
+        if (selectCamera)
             cameraSelect.value = selectCamera
 
-        if(selectMicrophone)
+        if (selectMicrophone)
             microphoneSelect.value = selectMicrophone
 
-        if(selectHorn)
+        if (selectHorn)
             hornSelect.value = selectHorn
     })
 }
@@ -731,14 +757,24 @@ hornSelect.addEventListener('change', () => {
 const sendCameraStream = () => {
     if (options.video || options.audio) {
         navigator.mediaDevices.getUserMedia(options).then(stream => {
-            cameraStream = stream
+            cameraStream = new MediaStream()
             if (options.video) {
+                cameraStream.addTrack(stream.getVideoTracks()[0])
                 camera.style.backgroundColor = 'black'
                 camera.style.color = 'white'
             }
             if (options.audio) {
-                if(video_startFlag)
+                microphoneAudioContext = new AudioContext()
+                microphoneGainNode = microphoneAudioContext.createGain()
+                microphoneDestination = microphoneAudioContext.createMediaStreamDestination()
+                microphoneGainNode.gain.value = microphoneRange.value / 100
+                microphoneGainNode.connect(microphoneDestination)
+                microphoneSource = microphoneAudioContext.createMediaStreamSource(stream)
+                microphoneSource.connect(microphoneGainNode)
+                cameraStream.addTrack(microphoneDestination.stream.getAudioTracks()[0])
+                if (video_startFlag) {
                     audioContext.createMediaStreamSource(cameraStream).connect(gainNode)
+                }
                 if (recognizing == false) {
                     recognition.start()
                     recognizing = true
@@ -747,7 +783,7 @@ const sendCameraStream = () => {
                 microphone.style.color = 'white'
             }
             peers.forEach(user => {
-                console.log(user.cameraId)
+                // console.log(user.cameraId)
                 cameraPeer.call(user.cameraId, cameraStream)
             })
         })
@@ -759,7 +795,7 @@ const sendCameraStream = () => {
 }
 
 screen.addEventListener('click', () => {
-    if (true) {
+    if (myPeer) {
         if (!screenStream) {
             if (video.srcObject) {
                 return
@@ -768,13 +804,15 @@ screen.addEventListener('click', () => {
                 video: true,
                 audio: true
             }).then(stream => {
-                video.srcObject = stream
                 screenStream = stream
-                if(video_startFlag)
-                    audioContext.createMediaStreamSource(screenStream).connect(gainNode)
+                video.srcObject = screenStream
+                if (video_startFlag) {
+                    screenSource = audioContext.createMediaStreamSource(stream)
+                    screenSource.connect(gainNode)
+                }
                 video.muted = true
                 video.play()
-                sendStream(stream)
+                sendStream(screenStream)
                 screen.style.backgroundColor = 'black'
                 screen.style.color = 'white'
             })
@@ -824,17 +862,19 @@ video_start.addEventListener('click', () => {
             audioContext = new AudioContext()
             destination = audioContext.createMediaStreamDestination()
             gainNode = audioContext.createGain()
-            
+            gainNode.gain.value = voiceRange.value / 100
+
             mixStream.addTrack(stream.getVideoTracks()[0])
-            if (video.srcObject){
-                audioContext.createMediaStreamSource(video.srcObject).connect(gainNode)
+            if (video.srcObject) {
+                screenSource = audioContext.createMediaStreamSource(video.srcObject)
+                screenSource.connect(gainNode)
             }
-            if (cameraStream){
+            if (cameraStream) {
                 audioContext.createMediaStreamSource(cameraStream).connect(gainNode)
             }
             const userVideos = staff.querySelectorAll('video')
-            userVideos.forEach(userVideo => { 
-                if(userVideo.srcObject != null){
+            userVideos.forEach(userVideo => {
+                if (userVideo.srcObject != null) {
                     console.log('123')
                     audioContext.createMediaStreamSource(userVideo.srcObject).connect(gainNode)
                 }
@@ -846,13 +886,14 @@ video_start.addEventListener('click', () => {
             recorder = new MediaRecorder(mixStream, {
                 mimeType: 'video/webm',
                 audioBitsPerSecond: 128000,
-                videoBitsPerSecond: 2500000}
+                videoBitsPerSecond: 2500000
+            }
             )
 
             recorder.ondataavailable = e => {
                 chunks.push(e.data)
             }
-  
+
             recorder.onstop = () => {
                 stream.getTracks().forEach(track => {
                     track.stop()
@@ -899,6 +940,10 @@ const microphoneStop = () => {
             track.stop()
         })
         cameraStream = null
+    }
+    if (microphoneSource) {
+        microphoneSource.disconnect(microphoneGainNode)
+        microphoneSource = null
     }
     recognition.stop()
     recognizing = false
@@ -949,4 +994,11 @@ voiceRange.addEventListener('input', () => {
     document.querySelectorAll('video').forEach(element => {
         element.volume = voiceRange.value / 100
     })
+    if (video_startFlag) {
+        gainNode.gain.value = voiceRange.value / 100
+    }
+})
+
+microphoneRange.addEventListener('input', () => {
+    microphoneGainNode.gain.value = microphoneRange.value / 100
 })

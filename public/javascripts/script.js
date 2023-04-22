@@ -68,6 +68,7 @@ var recognition = new webkitSpeechRecognition()
 recognition.lang = 'zh-TW'
 recognition.continuous = true
 recognition.interimResults = true
+var isStop = true
 const captionSelect = document.querySelector('#captionSelect')
 const video_start = document.querySelector('#video_start')
 var video_startFlag = false
@@ -77,6 +78,7 @@ var mixStream
 var audioContext
 var destination
 var gainNode
+var recorderMicrophoneSource
 var microphoneAudioContext
 var microphoneGainNode
 var microphoneDestination
@@ -269,6 +271,8 @@ captionButton.addEventListener('click', () => {
 
 recognition.onstart = () => { // 開始辨識
     recognizing = true // 設定為辨識中
+    isStop = false
+    // console.log('start')
 };
 
 recognition.onend = () => { // 辨識完成
@@ -276,7 +280,8 @@ recognition.onend = () => { // 辨識完成
         recognition.start()
         return
     }
-    console.log('stop')
+    isStop = true
+    // console.log('stop')
 };
 
 recognition.onresult = function (event) {
@@ -664,7 +669,7 @@ microphone.addEventListener('click', () => {
             cameraStop()
             microphoneStop()
         }
-        if (options.audio === false) {
+        if (options.audio == false) {
             options.audio = { deviceId: microphoneSelect.value }
         }
         else {
@@ -773,10 +778,12 @@ const sendCameraStream = () => {
                 microphoneSource.connect(microphoneGainNode)
                 cameraStream.addTrack(microphoneDestination.stream.getAudioTracks()[0])
                 if (video_startFlag) {
-                    audioContext.createMediaStreamSource(cameraStream).connect(gainNode)
+                    recorderMicrophoneSource = audioContext.createMediaStreamSource(cameraStream)
+                    recorderMicrophoneSource.connect(gainNode)
                 }
                 if (recognizing == false) {
-                    recognition.start()
+                    if (isStop)
+                        recognition.start()
                     recognizing = true
                 }
                 microphone.style.backgroundColor = 'black'
@@ -853,6 +860,13 @@ video_start.addEventListener('click', () => {
     if (video_startFlag) {
         recorder.stop()
         video_startFlag = false
+        if (recorderMicrophoneSource) {
+            recorderMicrophoneSource.disconnect(gainNode)
+        }
+        peers.forEach(peer => {
+            peer.audioSource.disconnect(gainNode)
+            peer.audioSource = null
+        })
         video_start.style.backgroundColor = 'white'
         video_start.style.color = 'black'
     }
@@ -862,21 +876,23 @@ video_start.addEventListener('click', () => {
             audioContext = new AudioContext()
             destination = audioContext.createMediaStreamDestination()
             gainNode = audioContext.createGain()
-            gainNode.gain.value = voiceRange.value / 100
 
             mixStream.addTrack(stream.getVideoTracks()[0])
             if (video.srcObject) {
                 screenSource = audioContext.createMediaStreamSource(video.srcObject)
                 screenSource.connect(gainNode)
             }
-            if (cameraStream) {
-                audioContext.createMediaStreamSource(cameraStream).connect(gainNode)
+            if (microphoneSource) {
+                recorderMicrophoneSource = audioContext.createMediaStreamSource(cameraStream)
+                recorderMicrophoneSource.connect(gainNode)
             }
-            const userVideos = staff.querySelectorAll('video')
-            userVideos.forEach(userVideo => {
-                if (userVideo.srcObject != null) {
-                    console.log('123')
-                    audioContext.createMediaStreamSource(userVideo.srcObject).connect(gainNode)
+            const userDiv = staff.querySelectorAll('div')
+            userDiv.forEach(div => {
+                const userVideo = div.querySelector('video')
+                if (userVideo.srcObject) {
+                    const n = peers.map(x => x.cameraId).indexOf(div.id)
+                    peers[n].audioSource = audioContext.createMediaStreamSource(userVideo.srcObject)
+                    peers[n].audioSource.connect(gainNode)
                 }
             })
             gainNode.connect(destination)
@@ -887,8 +903,7 @@ video_start.addEventListener('click', () => {
                 mimeType: 'video/webm',
                 audioBitsPerSecond: 128000,
                 videoBitsPerSecond: 2500000
-            }
-            )
+            })
 
             recorder.ondataavailable = e => {
                 chunks.push(e.data)
@@ -944,6 +959,10 @@ const microphoneStop = () => {
     if (microphoneSource) {
         microphoneSource.disconnect(microphoneGainNode)
         microphoneSource = null
+        if (video_startFlag) {
+            recorderMicrophoneSource.disconnect(gainNode)
+            recorderMicrophoneSource = null
+        }
     }
     recognition.stop()
     recognizing = false

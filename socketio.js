@@ -199,6 +199,7 @@ socketio.getSocketio = (server) => {
                                 roomStaff[roomId].splice(n, 1)
                             }
                             // console.log(roomStaff[roomId])
+                            clientSocket[sessionId] = null
                             socket.to(roomId).emit('user-disconnected', userId)
                         })
 
@@ -234,7 +235,11 @@ socketio.getSocketio = (server) => {
         socket.on('logout', sessId => {
             // console.log(sessId)
             socket.emit('access')
-            clientSocket[sessId].emit('logout')
+            if(clientSocket[sessId] != null) {
+                console.log('123')
+                clientSocket[sessId].emit('logout')
+                clientSocket[sessId] = null
+            }
         })
     })
 }

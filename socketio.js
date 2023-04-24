@@ -152,9 +152,15 @@ socketio.getSocketio = (server) => {
                                 fs.mkdirSync(`./public/files/${courseId}/${roomId}`)
                             if (fs.existsSync(`./public/files/${courseId}/${roomId}/${fileName}`)) {
                                 const parsed = path.parse(fileName)
-                                fileName = `${parsed.name}_${Date.now()}${parsed.ext}`
-                                console.log(fileName)
+                                var fileNum = 1
+                                var newFileName = `${parsed.name}(${fileNum})${parsed.ext}`
+                                while(fs.existsSync(`./public/files/${courseId}/${roomId}/${newFileName}`)){
+                                    fileNum++
+                                    newFileName = `${parsed.name}(${fileNum})${parsed.ext}`
+                                }
+                                fileName = newFileName
                             }
+                            console.log(fileName)
                             fs.writeFile(`./public/files/${courseId}/${roomId}/${fileName}`, fileData, err => {
                                 if (err) {
                                     console.log(err)

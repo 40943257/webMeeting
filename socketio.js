@@ -1,6 +1,7 @@
 var socketio = {}
 var socket_io = require('socket.io')
 var roomStaff = []
+var clientSocket = []
 var roomVote = []
 let mysql = require('mysql');
 let config = require('./config');
@@ -58,6 +59,7 @@ socketio.getSocketio = (server) => {
                             id: userId,
                             cameraId: cameraId
                         }
+                        clientSocket[sessionId] = socket
                         roomStaff[roomId].push(userInfo)
                         // console.log(roomStaff[roomId])
 
@@ -227,6 +229,12 @@ socketio.getSocketio = (server) => {
                     })
                 })
             })
+        })
+
+        socket.on('logout', sessId => {
+            // console.log(sessId)
+            socket.emit('access')
+            clientSocket[sessId].emit('logout')
         })
     })
 }

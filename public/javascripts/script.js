@@ -621,6 +621,10 @@ myPeer.on('open', id => {
             socket.on('stopMeeting', () => {
                 parent.window.location.assign(`http://${ip}/htmlPhp/user.php`)
             })
+
+            socket.on('logout', () => {
+                parent.window.location.assign(`http://${ip}/htmlPhp/loginpage.php`)
+            })
         })
 
     })

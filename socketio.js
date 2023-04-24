@@ -236,7 +236,6 @@ socketio.getSocketio = (server) => {
             // console.log(sessId)
             socket.emit('access')
             if(clientSocket[sessId] != null) {
-                console.log('123')
                 clientSocket[sessId].emit('logout')
                 clientSocket[sessId] = null
             }

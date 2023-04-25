@@ -59,7 +59,9 @@ socketio.getSocketio = (server) => {
                             id: userId,
                             cameraId: cameraId
                         }
-                        clientSocket[sessionId] = socket
+                        if(!clientSocket[sessionId])
+                            clientSocket[sessionId] = []
+                        clientSocket[sessionId].push(socket)
                         roomStaff[roomId].push(userInfo)
                         // console.log(roomStaff[roomId])
 
@@ -200,12 +202,17 @@ socketio.getSocketio = (server) => {
                         })
 
                         socket.on('disconnect', () => {
-                            const n = roomStaff[roomId].map(x => x.id).indexOf(userId)
+                            var n = roomStaff[roomId].map(x => x.id).indexOf(userId)
                             if (n != -1) {
                                 roomStaff[roomId].splice(n, 1)
                             }
                             // console.log(roomStaff[roomId])
-                            clientSocket[sessionId] = null
+                            var n = 0
+                            clientSocket.forEach(element => {
+                                if(element == socket) 
+                                    clientSocket[sessionId].splice(n, 1)
+                                n++
+                            })
                             socket.to(roomId).emit('user-disconnected', userId)
                         })
 
@@ -242,8 +249,18 @@ socketio.getSocketio = (server) => {
             // console.log(sessId)
             socket.emit('access')
             if(clientSocket[sessId] != null) {
-                clientSocket[sessId].emit('logout')
+                clientSocket[sessId].forEach(element => {
+                    element.emit('logout')
+                })
                 clientSocket[sessId] = null
+
+                let sql = `DELETE FROM cookiedata where phpSessionId = '${sessId}'`;
+                connection.query(sql, 1, (error, results, fields) => {
+                    if (error)
+                        return console.error(error.message);
+            
+                    console.log('Deleted Row(s):', results.affectedRows);
+                })
             }
         })
     })

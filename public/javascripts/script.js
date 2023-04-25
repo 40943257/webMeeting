@@ -12,23 +12,23 @@ const cameraPeer = new Peer(undefined, {
     port: '3003',
 })
 
-const ip = '127.0.0.1'
+const webHtmlIp = '127.0.0.1'
 const peers = []
 var userName = ''
-var messegeFlag = 1
-var staffFlag = 0
+var messegeFlag = true
+var staffFlag = false
 const messegeButton = document.querySelector('#messegeButton')
 const staffButton = document.querySelector('#staffButton')
 const messege = document.querySelector('#messege')
 const video = document.querySelector('#video')
 video.volume = 0.5
-const txtShow = document.querySelector('#txtShow')
-const txtInput = document.querySelector('#txtInput')
-const btnSend = document.querySelector("#btnSend")
+const messegeShow = document.querySelector('#messegeShow')
+const messegeInput = document.querySelector('#messegeInput')
+const messegeSend = document.querySelector("#messegeSend")
 const camera = document.querySelector('#camera')
 const microphone = document.querySelector('#microphone')
 const screen = document.querySelector('#screen')
-const voice = document.querySelector('#voice')
+const voiceZero = document.querySelector('#voiceZero')
 const voiceRange = document.querySelector('#voiceRange')
 const microphoneRange = document.querySelector('#microphoneRange')
 const staff = document.querySelector('#staff')
@@ -42,27 +42,27 @@ const hornSelect = document.querySelector('#hornSelect')
 const voteButton = document.querySelector('#voteButton')
 const voteRooms = document.querySelector('#voteRooms')
 const voteForm = document.querySelector('#voteForm')
-var voteFlag = 0
+var voteFlag = false
 const createVote = document.querySelector('#createVote')
-var createVoteFlag = 0
+var createVoteFlag = false
 const createVoteRoom = document.querySelector('#createVoteRoom')
 const numOfVoteOptions = document.querySelector('#numOfVoteOptions')
 const inputVoteOptions = document.querySelector('#inputVoteOptions')
 var voteNum = 0
 const SendcCeateVote = document.querySelector('#SendcCeateVote')
 const voteName = document.querySelector('#voteName')
-var voteRoomFlag = 0
+var voteRoomFlag = false
 const returnVote = document.querySelector('#returnVote')
 var voteChooseFlag = []
 var votes = []
 const fileButton = document.querySelector('#fileButton')
 const filePage = document.querySelector('#filePage')
-var filePageFlag = 0
+var filePageFlag = false
 const uploadFile = document.querySelector('#uploadFile')
 const sendFile = document.querySelector('#sendFile')
 const captionButton = document.querySelector('#captionButton')
 const caption = document.querySelector('#caption')
-var captionFlag = 0
+var captionFlag = false
 var recognizing = false
 var recognition = new webkitSpeechRecognition()
 recognition.lang = 'zh-TW'
@@ -86,8 +86,8 @@ const stopMeetingButton = document.querySelector('#stopMeetingButton')
 var cameraStream
 var screenStream
 var shareId
-var voiceFlag = 1
-var settingFlag = 0
+var voiceFlag = true
+var settingFlag = false
 var options = {
     video: true,
     audio: true
@@ -121,9 +121,9 @@ const change_size = () => {
         document.querySelector(`#voteRoom${i}`).style.width = bottom_right.style.width
     }
     video.height = document.documentElement.clientHeight - 40
-    txtShow.rows = document.documentElement.clientHeight * 0.07 - 10
-    txtShow.cols = document.documentElement.clientWidth * 0.025 - 5
-    txtInput.size = document.documentElement.clientWidth * 0.018
+    messegeShow.rows = document.documentElement.clientHeight * 0.07 - 10
+    messegeShow.cols = document.documentElement.clientWidth * 0.025 - 5
+    messegeInput.size = document.documentElement.clientWidth * 0.018
 
 }
 
@@ -143,13 +143,13 @@ window.onresize = change_size
 
 settingButton.addEventListener('click', () => {
     if (settingFlag) {
-        settingFlag = 0
+        settingFlag = false
         setting.style.display = 'none'
         settingButton.style.backgroundColor = 'white'
         settingButton.style.color = 'black'
     }
     else {
-        settingFlag = 1
+        settingFlag = true
         setting.style.display = 'block'
         settingButton.style.backgroundColor = 'black'
         settingButton.style.color = 'white'
@@ -162,7 +162,7 @@ messegeButton.addEventListener('click', () => {
     }
     else {
         clearButtonRight()
-        messegeFlag = 1
+        messegeFlag = true
         messege.style.display = 'block'
         messegeButton.style.backgroundColor = 'black'
         messegeButton.style.color = 'white'
@@ -176,7 +176,7 @@ staffButton.addEventListener('click', () => {
     }
     else {
         clearButtonRight()
-        staffFlag = 1
+        staffFlag = true
         staff.style.display = 'block'
         staffButton.style.backgroundColor = 'black'
         staffButton.style.color = 'white'
@@ -190,7 +190,7 @@ voteButton.addEventListener('click', () => {
     }
     else {
         clearButtonRight()
-        voteFlag = 1
+        voteFlag = true
         voteRooms.style.display = 'block'
         voteButton.style.backgroundColor = 'black'
         voteButton.style.color = 'white'
@@ -200,7 +200,7 @@ voteButton.addEventListener('click', () => {
 
 createVote.addEventListener('click', () => {
     clearButtonRight()
-    createVoteFlag = 1
+    createVoteFlag = true
     createVoteRoom.style.display = 'block'
     change_size()
 })
@@ -233,7 +233,7 @@ fileButton.addEventListener('click', () => {
     }
     else {
         clearButtonRight()
-        filePageFlag = 1
+        filePageFlag = true
         filePage.style.display = 'block'
         fileButton.style.backgroundColor = 'black'
         fileButton.style.color = 'white'
@@ -257,10 +257,10 @@ captionButton.addEventListener('click', () => {
         caption.style.display = 'none'
         captionButton.style.backgroundColor = 'white'
         captionButton.style.color = 'black'
-        captionFlag = 0
+        captionFlag = false
     }
     else {
-        captionFlag = 1
+        captionFlag = true   
         caption.style.display = 'block'
         captionButton.style.backgroundColor = 'black'
         captionButton.style.color = 'white'
@@ -298,23 +298,23 @@ recognition.onresult = function (event) {
 }
 
 const clearButtonRight = () => {
-    messegeFlag = 0
+    messegeFlag = false
     messege.style.display = 'none'
     messegeButton.style.backgroundColor = 'white'
     messegeButton.style.color = 'black'
-    staffFlag = 0
+    staffFlag = false
     staff.style.display = 'none'
     staffButton.style.backgroundColor = 'white'
     staffButton.style.color = 'black'
-    voteFlag = 0
+    voteFlag = false
     voteRooms.style.display = 'none'
     voteButton.style.backgroundColor = 'white'
     voteButton.style.color = 'black'
-    createVoteFlag = 0
+    createVoteFlag = false
     createVoteRoom.style.display = 'none'
     fileButton.style.backgroundColor = 'white'
     fileButton.style.color = 'black'
-    filePageFlag = 0
+    filePageFlag = false
     filePage.style.display = 'none'
     if (voteNum >= 1) {
         for (var i = 1; i <= voteNum; i++) {
@@ -333,7 +333,7 @@ myPeer.on('open', id => {
         // console.log('myId: ' + id + ' cameraId: ' + cameraId)
         var sessionId = document.cookie.replace(/(?:(?:^|.*;\s*)PHPSESSID*\=\s*([^;]*).*$)|^.*$/, "$1")
         if (sessionId == '') {
-            parent.window.location.assign(`http://${ip}/htmlPhp/loginpage.php`)
+            parent.window.location.assign(`http://${webHtmlIp}/htmlPhp/loginpage.php`)
         }
         socket.emit('sessionId', sessionId);
         socket.on('name', myName => {
@@ -436,7 +436,7 @@ myPeer.on('open', id => {
 
             socket.on('message', (message) => {
                 // console.log(message)
-                txtShow.value = txtShow.value + message + '\n'
+                messegeShow.value = messegeShow.value + message + '\n'
             })
 
             socket.on('shareId', userId => {
@@ -619,30 +619,30 @@ myPeer.on('open', id => {
             })
 
             socket.on('stopMeeting', () => {
-                parent.window.location.assign(`http://${ip}/htmlPhp/user.php`)
+                parent.window.location.assign(`http://${webHtmlIp}/htmlPhp/user.php`)
             })
 
             socket.on('logout', () => {
-                parent.window.location.assign(`http://${ip}/htmlPhp/loginpage.php`)
+                parent.window.location.assign(`http://${webHtmlIp}/htmlPhp/loginpage.php`)
             })
         })
 
     })
 })
 
-btnSend.addEventListener('click', () => {
-    if (txtInput.value == '') return
-    let txt = userName + ': ' + txtInput.value;
+messegeSend.addEventListener('click', () => {
+    if (messegeInput.value == '') return
+    let txt = userName + ': ' + messegeInput.value;
     socket.emit('message', txt)
-    txtInput.value = ''
+    messegeInput.value = ''
 })
 
-txtInput.addEventListener('keypress', event2 => {
+messegeInput.addEventListener('keypress', event2 => {
     if (event2.keyCode === 13 || event2.which === 13) {
-        if (txtInput.value == '') return
-        let txt = userName + ': ' + txtInput.value;
+        if (messegeInput.value == '') return
+        let txt = userName + ': ' + messegeInput.value;
         socket.emit('message', txt)
-        txtInput.value = ''
+        messegeInput.value = ''
     }
 })
 
@@ -967,11 +967,11 @@ const screenStop = () => {
     }
 }
 
-voice.addEventListener('click', () => {
+voiceZero.addEventListener('click', () => {
     if (voiceFlag) {
         voiceFlag = 0
-        voice.style.backgroundColor = 'white'
-        voice.style.color = 'black'
+        voiceZero.style.backgroundColor = 'white'
+        voiceZero.style.color = 'black'
         if (!screenStream) {
             video.muted = false
         }
@@ -983,8 +983,8 @@ voice.addEventListener('click', () => {
     }
     else {
         voiceFlag = 1
-        voice.style.backgroundColor = 'black'
-        voice.style.color = 'white'
+        voiceZero.style.backgroundColor = 'black'
+        voiceZero.style.color = 'white'
         video.muted = true
         const userVideos = staff.querySelectorAll('video')
         userVideos.forEach(userVideo => {

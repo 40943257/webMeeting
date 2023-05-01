@@ -22,7 +22,6 @@ router.get('/:room', (req, res, next) => {
       if(results.length > 0)
         res.render('room/roomId', { 
           roomId: req.params.room, 
-          sessId: req.cookies["PHPSESSID"],
           serverIp: serverIp
         })
       else

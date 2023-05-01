@@ -258,8 +258,6 @@ socketio.getSocketio = (server) => {
                 connection.query(sql, 1, (error, results, fields) => {
                     if (error)
                         return console.error(error.message);
-            
-                    console.log('Deleted Row(s):', results.affectedRows);
                 })
             }
         })

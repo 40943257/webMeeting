@@ -1,21 +1,4 @@
-const socket = io('/')
-const myPeer = new Peer(undefined, {
-    host: '/',
-    path: '/',
-    secure: true,
-    port: '3002',
-})
-var mypeerId
-const cameraPeer = new Peer(undefined, {
-    host: '/',
-    path: '/',
-    secure: true,
-    port: '3003',
-})
-var cameraPeerId
-
-const webHtmlIp = '127.0.0.1'
-const peers = []
+﻿const peers = []
 var userName = ''
 var messegeFlag = true
 var staffFlag = false
@@ -129,19 +112,8 @@ const change_size = () => {
 
 }
 
-// const inputName = () => {
-//     while (userName == null || userName == '') {
-//         userName = window.prompt('你的名子')
-//     }
-//     const option = document.createElement('option')
-//     option.value = 'my'
-//     option.text = userName
-//     captionSelect.appendChild(option)
-// }
-
 change_size()
 window.onresize = change_size
-// inputName()
 
 settingButton.addEventListener('click', () => {
     if (settingFlag) {
@@ -262,7 +234,7 @@ captionButton.addEventListener('click', () => {
         captionFlag = false
     }
     else {
-        captionFlag = true   
+        captionFlag = true
         caption.style.display = 'block'
         captionButton.style.backgroundColor = 'black'
         captionButton.style.color = 'white'
@@ -282,8 +254,6 @@ recognition.onend = () => { // 辨識完成
 };
 
 recognition.onresult = function (event) {
-    // var interimTranscript = ''
-
     // 將中間結果和最終結果分開處理
     for (var i = event.resultIndex; i < event.results.length; ++i) {
         if (!event.results[i].isFinal) {
@@ -330,319 +300,299 @@ stopMeetingButton.addEventListener('click', () => {
     socket.emit('stopMeeting')
 })
 
-myPeer.on('open', id => {
-    mypeerId = id
-    console.log('myPeer: ', mypeerId)
-    if(cameraPeerId)
-        peerLInkSuss()
-})
+socket.emit('sessionId', sessId);
+socket.on('name', myName => {
+    userName = myName
+    console.log(myName)
+    const option = document.createElement('option')
+    option.value = 'my'
+    option.id = 'option_my'
+    option.text = userName
+    captionSelect.appendChild(option)
+    socket.emit('join-room', ROOM_ID, myPeer._id, cameraPeer._id)
 
-cameraPeer.on('open', id => {
-    cameraPeerId = id
-    console.log('cameraPeerId: ', cameraPeerId)
-    if(mypeerId)
-        peerLInkSuss()
-})
-
-const peerLInkSuss = () => {
-    var sessionId = document.cookie.replace(/(?:(?:^|.*;\s*)PHPSESSID*\=\s*([^;]*).*$)|^.*$/, "$1")
-    if (sessionId == '') {
-        parent.window.location.assign(`http://${webHtmlIp}/htmlPhp/loginpage.php`)
-    }
-    console.log(sessionId)
-    socket.emit('sessionId', sessionId);
-    socket.on('name', myName => {
-        userName = myName
-        console.log(myName)
+    socket.on('connection', (userId, userCameraId, name) => {
+        // console.log('user: ' + userId + ' connection')
+        if (screenStream) {
+            myPeer.call(userId, screenStream)
+        }
+        const userDiv = document.createElement('div')
+        userDiv.id = userCameraId
+        const cameraVideo = document.createElement('video')
+        cameraVideo.srcObject = null
+        cameraVideo.setSinkId(hornSelect.value)
+        cameraVideo.volume = voiceRange.value / 100
+        if (voiceFlag) {
+            cameraVideo.muted = true
+        }
+        else {
+            cameraVideo.muted = false
+        }
+        var br = document.createElement("br");
+        userDiv.append(name)
+        userDiv.append(br)
+        userDiv.append(cameraVideo)
+        staff.append(userDiv)
+        if (cameraStream) {
+            cameraPeer.call(userCameraId, cameraStream)
+        }
         const option = document.createElement('option')
-        option.value = 'my'
-        option.id = 'option_my'
-        option.text = userName
+        option.value = userId
+        option.id = `option_${userId}`
+        option.text = name
         captionSelect.appendChild(option)
-        socket.emit('join-room', ROOM_ID, mypeerId, cameraPeerId)
+        const userInfo = {
+            name: name,
+            id: userId,
+            cameraId: userCameraId
+        }
+        peers.push(userInfo)
+        // console.log(peers)
+    })
 
-        socket.on('connection', (userId, userCameraId, name) => {
-            // console.log('user: ' + userId + ' connection')
-            if (screenStream) {
-                myPeer.call(userId, screenStream)
+    myPeer.on('call', call => {
+        call.answer()
+        call.on('stream', userStream => {
+            if (video_startFlag) {
+                screenSource = audioContext.createMediaStreamSource(userStream)
+                screenSource.connect(gainNode)
             }
-            const userDiv = document.createElement('div')
-            userDiv.id = userCameraId
-            const cameraVideo = document.createElement('video')
-            cameraVideo.srcObject = null
-            cameraVideo.setSinkId(hornSelect.value)
-            cameraVideo.volume = voiceRange.value / 100
-            if (voiceFlag) {
-                cameraVideo.muted = true
-            }
-            else {
-                cameraVideo.muted = false
-            }
-            var br = document.createElement("br");
-            userDiv.append(name)
-            userDiv.append(br)
-            userDiv.append(cameraVideo)
-            staff.append(userDiv)
-            if (cameraStream) {
-                cameraPeer.call(userCameraId, cameraStream)
-            }
-            const option = document.createElement('option')
-            option.value = userId
-            option.id = `option_${userId}`
-            option.text = name
-            captionSelect.appendChild(option)
-            const userInfo = {
-                name: name,
-                id: userId,
-                cameraId: userCameraId
-            }
-            peers.push(userInfo)
-            // console.log(peers)
-        })
+            video.srcObject = userStream
+            let playPromise = video.play()
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    video.play()
+                }).catch(() => {
 
-        myPeer.on('call', call => {
-            call.answer()
-            call.on('stream', userStream => {
-                if (video_startFlag) {
-                    screenSource = audioContext.createMediaStreamSource(userStream)
-                    screenSource.connect(gainNode)
-                }
-                video.srcObject = userStream
-                let playPromise = video.play()
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        video.play()
-                    }).catch(() => {
-
-                    })
-                }
-                if (!voiceFlag) {
-                    video.muted = false
-                }
-            })
-        })
-
-        cameraPeer.on('call', call => {
-            call.answer()
-            const cameraVideo = (document.getElementById(call.peer)).querySelector('video')
-            call.on('stream', stream => {
-                cameraVideo.srcObject = stream
-                const n = peers.map(x => x.cameraId).indexOf(call.id)
-                if (video_startFlag) {
-                    if (n != -1) {
-                        peers[n].audioSource = audioContext.createMediaStreamSource(stream)
-                        peers[n].audioSource.connect(gainNode)
-                    }
-                }
-                if (voiceFlag)
-                    stream.getAudioTracks().forEach(track => track.enabled = false)
-                else
-                    stream.getAudioTracks().forEach(track => track.enabled = true)
-                let playPromise = cameraVideo.play()
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        cameraVideo.play()
-                    }).catch(() => {
-
-                    })
-                }
-            })
-        })
-
-        socket.on('message', (message) => {
-            // console.log(message)
-            messegeShow.value = messegeShow.value + message + '\n'
-        })
-
-        socket.on('shareId', userId => {
-            shareId = userId
-        })
-
-        socket.on('voteNum', num => {
-            const voteOptions = document.querySelectorAll('#vote_option')
-            voteOptions.forEach(voteOption => {
-                var radio = document.createElement('input')
-                radio.type = 'radio'
-                radio.id = `vote${num}_option`
-                radio.name = `vote${num}_option`
-                radio.value = voteOption.value
-                socket.emit('vote', num, radio.value)
-            })
-            socket.emit('vote', num, 'end')
-            voteName.value = ''
-            inputVoteOptions.innerHTML = ''
-            numOfVoteOptions[0].selected = true
-            voteButton.click()
-        })
-
-        socket.on('vote', (num, vote_name, vote__option, numOf_Votes) => {
-            // console.log(n + ' ' + vote__option)
-            if (vote__option == 'end') {
-                var sendVote = document.createElement('button')
-                sendVote.id = 'sendVote'
-                sendVote.textContent = '送出'
-                const voteRoom = document.querySelector(`#voteRoom${num}`)
-                voteRoom.appendChild(sendVote)
-                sendVote.addEventListener('click', () => {
-                    document.querySelectorAll(`#vote${num}_option`).forEach(choose => {
-                        if (choose.checked) {
-                            voteChooseFlag[num] = 1
-                            socket.emit('voteChoose', num, choose.value)
-                            voteButton.click()
-                            const n = votes[num].option.map(x => x.name).indexOf(choose.value)
-                            if (n != -1) {
-                                votes[num].option[n].numOfVotes++
-                            }
-                        }
-                    })
                 })
             }
-            else {
-                if (voteNum < num) {
-                    votes[num] = []
-                    votes[num].name = vote_name
-                    votes[num].option = []
-                    var vote = document.createElement('button')
-                    var br = document.createElement('br')
-                    vote.id = `vote${num}`
-                    vote.textContent = vote_name
-                    voteForm.appendChild(vote)
-                    voteForm.appendChild(br)
-                    voteNum = num
-                    var returnButton = document.createElement('button')
-                    var br2 = document.createElement('br')
-                    returnButton.id = 'return'
-                    returnButton.textContent = '返回'
-                    var voteRoom = document.createElement('div')
-                    voteRoom.id = `voteRoom${num}`
-                    voteRoom.className = 'voteRoom'
-                    voteRoom.style.display = 'none'
-                    voteRoom.appendChild(returnButton)
-                    voteRoom.appendChild(br2)
-                    bottom_right.appendChild(voteRoom)
-                    vote.addEventListener('click', () => {
-                        if (voteChooseFlag[num] != 1) {
-                            clearButtonRight()
-                            voteRoom.style.display = 'block'
-                            voteRoomFlag = 1
-                            change_size()
-                        }
-                        else {
-                            document.querySelectorAll(`#vote${num}_option`).forEach(choose => {
-                                if (choose.checked) {
-                                    let alertText = `你已投了: ${choose.value}`
-                                    votes[num].option.forEach(element => {
-                                        alertText += `\n${element.name}: ${element.numOfVotes}`
-                                    })
-                                    alert(alertText)
-                                }
-                            })
-                        }
-                    })
-                    returnButton.addEventListener('click', () => {
-                        voteButton.click()
-                    })
-                    voteChooseFlag[num] = 0
-                }
-                var radio = document.createElement('input')
-                var br = document.createElement('br')
-                radio.type = 'radio'
-                radio.id = `vote${num}_option`
-                radio.name = `vote${num}_option`
-                radio.value = vote__option
-                const vote__Room = document.querySelector(`#voteRoom${num}`)
-                vote__Room.appendChild(radio)
-                vote__Room.append(vote__option)
-                vote__Room.appendChild(br)
-                var voteOptionContext = {
-                    name: vote__option,
-                    numOfVotes: numOf_Votes
-                }
-                votes[num].option.push(voteOptionContext)
+            if (!voiceFlag) {
+                video.muted = false
             }
-        })
-
-        socket.on('voteChoose', (num, vote_name, choose, numOfVotes) => {
-            // console.log(num + ' ' + vote_name + ' ' + choose + ' ' + numOfVotes)
-            const n = votes[num].option.map(x => x.name).indexOf(choose)
-            if (n != -1) {
-                votes[num].option[n].numOfVotes = numOfVotes
-            }
-        })
-
-        socket.on('caption', (userId, captionText) => {
-            if (captionSelect.value == userId) {
-                caption.innerHTML = captionText
-            }
-        })
-
-        socket.on('courseFile', fileName => {
-            const downloadFileButton = document.createElement('button')
-            const br = document.createElement('br')
-            downloadFileButton.id = fileName
-            downloadFileButton.textContent = fileName
-            filePage.appendChild(downloadFileButton)
-            filePage.appendChild(br)
-
-            downloadFileButton.addEventListener('click', () => {
-                socket.emit('downloadFile', fileName)
-            })
-        })
-
-        socket.on('downloadFile', (fileName, fileType, fileData) => {
-            const blob = new Blob([fileData], { type: fileType })
-            const downloadLink = document.createElement('a')
-            downloadLink.href = window.URL.createObjectURL(blob)
-            downloadLink.download = fileName
-            downloadLink.click()
-        })
-
-        socket.on('stopStream', () => {
-            video.srcObject = null
-            if (screenSource) {
-                screenSource.disconnect(gainNode)
-            }
-        })
-
-        socket.on('stopCameraStream', (userCameraId) => {
-            const userVideo = document.getElementById(userCameraId).querySelector('video')
-            userVideo.srcObject = null
-
-            if (video_startFlag) {
-                const n = peers.map(x => x.cameraId).indexOf(userCameraId)
-                if (n != -1) {
-                    peers[n].audioSource.disconnect(gainNode)
-                    peers[n].audioSource = null
-                }
-            }
-        })
-
-        socket.on('user-disconnected', userId => {
-            const n = peers.map(x => x.id).indexOf(userId)
-            if (n != -1) {
-                cameraPeerId = peers[n].cameraId
-                peers.splice(n, 1)
-                const disUser = document.getElementById(cameraPeerId)
-                disUser.remove()
-                document.getElementById(`option_${userId}`).remove()
-                if (shareId == userId) {
-                    video.srcObject = null
-                    shareId = null
-                }
-            }
-            // console.log(peers)
-        })
-
-        socket.on('stopMeeting', () => {
-            parent.window.location.assign(`http://${webHtmlIp}/htmlPhp/user.php`)
-        })
-
-        socket.on('logout', () => {
-            parent.window.location.assign(`http://${webHtmlIp}/htmlPhp/loginpage.php`)
         })
     })
 
-}
+    cameraPeer.on('call', call => {
+        call.answer()
+        const cameraVideo = (document.getElementById(call.peer)).querySelector('video')
+        call.on('stream', stream => {
+            cameraVideo.srcObject = stream
+            const n = peers.map(x => x.cameraId).indexOf(call.id)
+            if (video_startFlag) {
+                if (n != -1) {
+                    peers[n].audioSource = audioContext.createMediaStreamSource(stream)
+                    peers[n].audioSource.connect(gainNode)
+                }
+            }
+            if (voiceFlag)
+                stream.getAudioTracks().forEach(track => track.enabled = false)
+            else
+                stream.getAudioTracks().forEach(track => track.enabled = true)
+            let playPromise = cameraVideo.play()
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    cameraVideo.play()
+                }).catch(() => {
+
+                })
+            }
+        })
+    })
+
+    socket.on('message', (message) => {
+        // console.log(message)
+        messegeShow.value = messegeShow.value + message + '\n'
+    })
+
+    socket.on('shareId', userId => {
+        shareId = userId
+    })
+
+    socket.on('voteNum', num => {
+        const voteOptions = document.querySelectorAll('#vote_option')
+        voteOptions.forEach(voteOption => {
+            var radio = document.createElement('input')
+            radio.type = 'radio'
+            radio.id = `vote${num}_option`
+            radio.name = `vote${num}_option`
+            radio.value = voteOption.value
+            socket.emit('vote', num, radio.value)
+        })
+        socket.emit('vote', num, 'end')
+        voteName.value = ''
+        inputVoteOptions.innerHTML = ''
+        numOfVoteOptions[0].selected = true
+        voteButton.click()
+    })
+
+    socket.on('vote', (num, vote_name, vote__option, numOf_Votes) => {
+        // console.log(n + ' ' + vote__option)
+        if (vote__option == 'end') {
+            var sendVote = document.createElement('button')
+            sendVote.id = 'sendVote'
+            sendVote.textContent = '送出'
+            const voteRoom = document.querySelector(`#voteRoom${num}`)
+            voteRoom.appendChild(sendVote)
+            sendVote.addEventListener('click', () => {
+                document.querySelectorAll(`#vote${num}_option`).forEach(choose => {
+                    if (choose.checked) {
+                        voteChooseFlag[num] = 1
+                        socket.emit('voteChoose', num, choose.value)
+                        voteButton.click()
+                        const n = votes[num].option.map(x => x.name).indexOf(choose.value)
+                        if (n != -1) {
+                            votes[num].option[n].numOfVotes++
+                        }
+                    }
+                })
+            })
+        }
+        else {
+            if (voteNum < num) {
+                votes[num] = []
+                votes[num].name = vote_name
+                votes[num].option = []
+                var vote = document.createElement('button')
+                var br = document.createElement('br')
+                vote.id = `vote${num}`
+                vote.textContent = vote_name
+                voteForm.appendChild(vote)
+                voteForm.appendChild(br)
+                voteNum = num
+                var returnButton = document.createElement('button')
+                var br2 = document.createElement('br')
+                returnButton.id = 'return'
+                returnButton.textContent = '返回'
+                var voteRoom = document.createElement('div')
+                voteRoom.id = `voteRoom${num}`
+                voteRoom.className = 'voteRoom'
+                voteRoom.style.display = 'none'
+                voteRoom.appendChild(returnButton)
+                voteRoom.appendChild(br2)
+                bottom_right.appendChild(voteRoom)
+                vote.addEventListener('click', () => {
+                    if (voteChooseFlag[num] != 1) {
+                        clearButtonRight()
+                        voteRoom.style.display = 'block'
+                        voteRoomFlag = 1
+                        change_size()
+                    }
+                    else {
+                        document.querySelectorAll(`#vote${num}_option`).forEach(choose => {
+                            if (choose.checked) {
+                                let alertText = `你已投了: ${choose.value}`
+                                votes[num].option.forEach(element => {
+                                    alertText += `\n${element.name}: ${element.numOfVotes}`
+                                })
+                                alert(alertText)
+                            }
+                        })
+                    }
+                })
+                returnButton.addEventListener('click', () => {
+                    voteButton.click()
+                })
+                voteChooseFlag[num] = 0
+            }
+            var radio = document.createElement('input')
+            var br = document.createElement('br')
+            radio.type = 'radio'
+            radio.id = `vote${num}_option`
+            radio.name = `vote${num}_option`
+            radio.value = vote__option
+            const vote__Room = document.querySelector(`#voteRoom${num}`)
+            vote__Room.appendChild(radio)
+            vote__Room.append(vote__option)
+            vote__Room.appendChild(br)
+            var voteOptionContext = {
+                name: vote__option,
+                numOfVotes: numOf_Votes
+            }
+            votes[num].option.push(voteOptionContext)
+        }
+    })
+
+    socket.on('voteChoose', (num, vote_name, choose, numOfVotes) => {
+        // console.log(num + ' ' + vote_name + ' ' + choose + ' ' + numOfVotes)
+        const n = votes[num].option.map(x => x.name).indexOf(choose)
+        if (n != -1) {
+            votes[num].option[n].numOfVotes = numOfVotes
+        }
+    })
+
+    socket.on('caption', (userId, captionText) => {
+        if (captionSelect.value == userId) {
+            caption.innerHTML = captionText
+        }
+    })
+
+    socket.on('courseFile', fileName => {
+        const downloadFileButton = document.createElement('button')
+        const br = document.createElement('br')
+        downloadFileButton.id = fileName
+        downloadFileButton.textContent = fileName
+        filePage.appendChild(downloadFileButton)
+        filePage.appendChild(br)
+
+        downloadFileButton.addEventListener('click', () => {
+            socket.emit('downloadFile', fileName)
+        })
+    })
+
+    socket.on('downloadFile', (fileName, fileType, fileData) => {
+        const blob = new Blob([fileData], { type: fileType })
+        const downloadLink = document.createElement('a')
+        downloadLink.href = window.URL.createObjectURL(blob)
+        downloadLink.download = fileName
+        downloadLink.click()
+    })
+
+    socket.on('stopStream', () => {
+        video.srcObject = null
+        if (screenSource) {
+            screenSource.disconnect(gainNode)
+        }
+    })
+
+    socket.on('stopCameraStream', (userCameraId) => {
+        const userVideo = document.getElementById(userCameraId).querySelector('video')
+        userVideo.srcObject = null
+
+        if (video_startFlag) {
+            const n = peers.map(x => x.cameraId).indexOf(userCameraId)
+            if (n != -1) {
+                peers[n].audioSource.disconnect(gainNode)
+                peers[n].audioSource = null
+            }
+        }
+    })
+
+    socket.on('user-disconnected', userId => {
+        const n = peers.map(x => x.id).indexOf(userId)
+        if (n != -1) {
+            cameraPeer._id = peers[n].cameraId
+            peers.splice(n, 1)
+            const disUser = document.getElementById(cameraPeer._id)
+            disUser.remove()
+            document.getElementById(`option_${userId}`).remove()
+            if (shareId == userId) {
+                video.srcObject = null
+                shareId = null
+            }
+        }
+        // console.log(peers)
+    })
+
+    socket.on('stopMeeting', () => {
+        parent.window.location.assign(`http://${serverIp}/htmlPhp/user.php`)
+    })
+
+    socket.on('logout', () => {
+        parent.window.location.assign(`http://${serverIp}/htmlPhp/loginpage.php`)
+    })
+})
+
+
 
 messegeSend.addEventListener('click', () => {
     if (messegeInput.value == '') return
@@ -846,31 +796,6 @@ screen.addEventListener('click', () => {
     }
 })
 
-// video.addEventListener('loadedmetadata', () => {
-//     video.play()
-//     if ((video.videoWidth / video.videoHeight) < (video.width / video.height)) {
-//         var new_width, new_height
-//         new_height = video.height
-//         new_width = (new_height * video.videoWidth) / video.videoHeight
-//         canvas.width = new_width
-//         canvas.height = new_height
-//     }
-//     else {
-//         var new_width, new_height
-//         new_width = video.width
-//         new_height = (new_width * video.videoHeight) / video.videoWidth
-//         canvas.width = new_width
-//         canvas.height = new_height
-//     }
-//     canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height)
-//     // console.log(canvas.toDataURL("image/png"))
-//     console.log(canvasContext.getImageData(0,0,canvas.width, canvas.height).data)
-//     // socket.emit('img', canvas.toDataURL("image/png"))
-//     if (!video.srcObject) {
-//         return
-//     }
-// })
-
 video_start.addEventListener('click', () => {
     if (video_startFlag) {
         recorder.stop()
@@ -909,8 +834,7 @@ video_start.addEventListener('click', () => {
                 mimeType: 'video/webm',
                 audioBitsPerSecond: 128000,
                 videoBitsPerSecond: 2500000
-            }
-            )
+            })
 
             recorder.ondataavailable = e => {
                 chunks.push(e.data)

@@ -109,10 +109,11 @@ html(lang="en")
                     button#sendFile.border-radius-5.border-none 上傳
                     br
                     br
-    
-    |<script>
-    !='ROOM_ID = "'+roomId+'"'
-    |</script>
+
+    script.
+        const ROOM_ID = "#{roomId}"
+        const sessId = "#{sessId}"
+        const serverIp = "#{serverIp}"
     script(src="/javascripts/peerjs.min.js")
     script(src="/socket.io/socket.io.js")
-    script(src="/javascripts/script.js") 
+    script(src="/javascripts/link.js") 

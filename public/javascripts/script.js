@@ -338,7 +338,6 @@
             socket.emit('stopMeeting')
         })
 
-        socket.emit('sessionId', sessId);
         socket.on('name', myName => {
             userName = myName
             console.log(myName)

@@ -82,6 +82,7 @@ socketio.getSocketio = (server) => {
                     });
 
                     socket.on('message', (message) => {
+<<<<<<< HEAD
                         // console.log(message)
                         io.to(roomId).emit('message', message)
                     })
@@ -118,6 +119,48 @@ socketio.getSocketio = (server) => {
                     socket.on('caption', (isFinal, captionText) => {
                         socket.to(roomId).emit('caption', userId, captionText)
 
+=======
+                        console.log(message)
+                        io.to(roomId).emit('message', message)
+                    })
+
+                    socket.on('shareId', () => {
+                        socket.to(roomId).emit('shareId', userId)
+                    })
+
+                    socket.on('getVoteNum', (voteName) => {
+                        const num = ++roomVote[roomId].voteNum
+                        socket.emit('voteNum', num)
+                        roomVote[roomId][num] = {}
+                        roomVote[roomId][num].num = num
+                        roomVote[roomId][num].name = voteName
+                        roomVote[roomId][num].option = []
+                    })
+
+                    socket.on('vote', (n, vote_option) => {
+                        io.to(roomId).emit('vote', n, roomVote[roomId][n].name, vote_option, 0)
+
+                        var voteOption = {
+                            voteOption: vote_option,
+                            numOfVotes: 0
+                        }
+                        roomVote[roomId][n].option.push(voteOption)
+                        // console.log(roomVote[roomId])
+                    })
+
+                    socket.on('voteChoose', (n, choose) => {
+                        // console.log(n + ' ' + vote_name + ' ' + choose)
+                        const num = roomVote[roomId][n].option.map(x => x.voteOption).indexOf(choose)
+                        if (num != -1) {
+                            roomVote[roomId][n].option[num].numOfVotes++
+                            socket.to(roomId).emit('voteChoose', n, roomVote[roomId][n].name, choose, roomVote[roomId][n].option[num].numOfVotes)
+                        }
+                    })
+
+                    socket.on('caption', (isFinal, captionText) => {
+                        socket.to(roomId).emit('caption', userId, captionText)
+
+>>>>>>> 8692bef2b37e0cabde1edd0b7eba55186062d159
                         if (isFinal) {
                             if (!fs.existsSync(`./public/files/${courseId}`))
                                 fs.mkdirSync(`./public/files/${courseId}`)
@@ -147,7 +190,11 @@ socketio.getSocketio = (server) => {
                     })
 
                     socket.on('uploadFile', (fileName, fileType, fileData) => {
+<<<<<<< HEAD
                         // console.log(fileName)
+=======
+                        // console.log(fileName + ' ' + fileType)
+>>>>>>> 8692bef2b37e0cabde1edd0b7eba55186062d159
                         // console.log(fileData)
                         if (!fs.existsSync(`./public/files/${courseId}`))
                             fs.mkdirSync(`./public/files/${courseId}`)
@@ -163,7 +210,11 @@ socketio.getSocketio = (server) => {
                             }
                             fileName = newFileName
                         }
+<<<<<<< HEAD
                         // console.log(fileName)
+=======
+                        console.log(fileName)
+>>>>>>> 8692bef2b37e0cabde1edd0b7eba55186062d159
                         fs.writeFile(`./public/files/${courseId}/${roomId}/${fileName}`, fileData, err => {
                             if (err) {
                                 console.log(err)
@@ -219,7 +270,11 @@ socketio.getSocketio = (server) => {
 
                     socket.on('stopMeeting', () => {
                         io.to(roomId).emit('stopMeeting')
+<<<<<<< HEAD
                         // console.log(roomVote[roomId])
+=======
+                        console.log(roomVote[roomId])
+>>>>>>> 8692bef2b37e0cabde1edd0b7eba55186062d159
                         if (roomVote[roomId].voteNum > 0) {
                             if (!fs.existsSync(`./public/files/${courseId}`))
                                 fs.mkdirSync(`./public/files/${courseId}`)

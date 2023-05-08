@@ -1,5 +1,4 @@
-(function () {
-    const socket = io('/')
+﻿﻿(function () {
     const myPeer = new Peer(undefined, {
         host: '/',
         path: '/',
@@ -14,75 +13,84 @@
     })
     var access = false
 
-    socket.on('connect', () => {
-        console.log('connect')
-        if (myPeer._id && cameraPeer._id && !access) {
-            access = true
-            linkSuss()
-        }
-    })
-
     myPeer.on('open', id => {
-        if (cameraPeer._id && socket.connected && !access) {
+        if (cameraPeer._id && !access) {
             access = true
             linkSuss()
         }
     })
 
     cameraPeer.on('open', id => {
-        if (myPeer._id && socket.connected && !access) {
+        if (myPeer._id && !access) {
             access = true
             linkSuss()
         }
     })
+
     const linkSuss = () => {
+        const socket = io('/')
         const peers = []
         var userName = ''
-        var messegeFlag = true
-        var staffFlag = false
-        const messegeButton = document.querySelector('#messegeButton')
-        const staffButton = document.querySelector('#staffButton')
-        const messege = document.querySelector('#messege')
-        const video = document.querySelector('#video')
-        video.volume = 0.5
-        const messegeShow = document.querySelector('#messegeShow')
-        const messegeInput = document.querySelector('#messegeInput')
-        const messegeSend = document.querySelector("#messegeSend")
-        const camera = document.querySelector('#camera')
-        const microphone = document.querySelector('#microphone')
-        const screen = document.querySelector('#screen')
-        const voiceZero = document.querySelector('#voiceZero')
-        const voiceRange = document.querySelector('#voiceRange')
-        const microphoneRange = document.querySelector('#microphoneRange')
-        const staff = document.querySelector('#staff')
-        const bottom_left = document.querySelector('#bottom_left')
-        const bottom_right = document.querySelector('#bottom_right')
-        const settingButton = document.querySelector('#settingButton')
-        const setting = document.querySelector('#setting')
+        const screenButtonm = document.querySelector('#screenButtonm')
+        var screenStream
+        const cameraButtonm = document.querySelector('#cameraButtonm')
+        const microphoneButtonm = document.querySelector('#microphoneButtonm')
+        var cameraStream
+        var shareId
+        const video_startButtonm = document.querySelector('#video_startButtonm')
+        var video_startFlag = false
+        const stopMeetingButton = document.querySelector('#stopMeetingButton')
         const microphoneSelect = document.querySelector('#microphoneSelect')
         const cameraSelect = document.querySelector('#cameraSelect')
         const hornSelect = document.querySelector('#hornSelect')
+        const messegeButton = document.querySelector('#messegeButton')
+        const staffButton = document.querySelector('#staffButton')
         const voteButton = document.querySelector('#voteButton')
-        const voteRooms = document.querySelector('#voteRooms')
-        const voteForm = document.querySelector('#voteForm')
-        var voteFlag = false
         const createVote = document.querySelector('#createVote')
-        var createVoteFlag = false
+        const returnVoteRoom = document.querySelector('#returnVoteRoom')
+        const fileButton = document.querySelector('#fileButton')
+        const messege = document.querySelector('#messege')
+        const messegeShow = document.querySelector('#messegeShow')
+        const messegeInput = document.querySelector('#messegeInput')
+        const messegeSend = document.querySelector("#messegeSend")
+        const staff = document.querySelector('#staff')
+        const staffInner = document.querySelector('#staffInner')
+        const votePage = document.querySelector('#votePage')
         const createVoteRoom = document.querySelector('#createVoteRoom')
+        const filePage = document.querySelector('#filePage')
+        const voiceZeroButton = document.querySelector('#voiceZeroButton')
+        var voiceZeroFlag = true
+        const voiceRange = document.querySelector('#voiceRange')
+        const microphoneRange = document.querySelector('#microphoneRange')
+        const video = document.querySelector('#video')
+        video.volume = 0.5
+        var messegeFlag = true
+        var staffFlag = false
+        var voteRoomsFlag = false
+        var createVoteRoomFlag = false
+        var filePageeFlag = false
+        var options = {
+            video: true,
+            audio: true
+        }
+        var microphoneAudioContext
+        var microphoneGainNode
+        var microphoneDestination
+        var microphoneSource
+        const voteForm = document.querySelector('#voteForm')
+        const voteName = document.querySelector('#voteName')
         const numOfVoteOptions = document.querySelector('#numOfVoteOptions')
         const inputVoteOptions = document.querySelector('#inputVoteOptions')
-        var voteNum = 0
-        const SendcCeateVote = document.querySelector('#SendcCeateVote')
-        const voteName = document.querySelector('#voteName')
-        var voteRoomFlag = false
-        const returnVote = document.querySelector('#returnVote')
+        const sendcCeateVote = document.querySelector('#sendcCeateVote')
         var voteChooseFlag = []
         var votes = []
-        const fileButton = document.querySelector('#fileButton')
-        const filePage = document.querySelector('#filePage')
-        var filePageFlag = false
+        var voteNum = 0
+        const voteRoomsPage = document.querySelector('#voteRoomsPage')
+        const voteRooms = document.querySelector('#voteRooms')
+        const returnVoteRoom2 = document.querySelector('#returnVoteRoom2')
         const uploadFile = document.querySelector('#uploadFile')
         const sendFile = document.querySelector('#sendFile')
+        const file = document.querySelector('#file')
         const captionButton = document.querySelector('#captionButton')
         const caption = document.querySelector('#caption')
         var captionFlag = false
@@ -92,165 +100,136 @@
         recognition.continuous = true
         recognition.interimResults = true
         const captionSelect = document.querySelector('#captionSelect')
-        const video_start = document.querySelector('#video_start')
-        var video_startFlag = false
-        var recorder
-        var chunks
-        var mixStream
-        var audioContext
-        var destination
-        var gainNode
-        var microphoneAudioContext
-        var microphoneGainNode
-        var microphoneDestination
-        var microphoneSource
-        var screenSource
-        const stopMeetingButton = document.querySelector('#stopMeetingButton')
-        var cameraStream
-        var screenStream
-        var shareId
-        var voiceFlag = true
-        var settingFlag = false
-        var options = {
-            video: true,
-            audio: true
+        const body = document.body
+        const bodyCanvas = document.createElement('canvas')
+        const bodyCtx = bodyCanvas.getContext('2d')
+
+        const clearBottomRight = () => {
+            messege.classList.add('visually-hidden')
+            messegeButton.classList.remove('btn-dark')
+            messegeButton.classList.add('btn-secondary')
+            messegeFlag = false
+
+            staff.classList.add('visually-hidden')
+            staffButton.classList.remove('btn-dark')
+            staffButton.classList.add('btn-secondary')
+            staffFlag = false
+
+            votePage.classList.add('visually-hidden')
+            voteButton.classList.remove('btn-dark')
+            voteButton.classList.add('btn-secondary')
+            voteRoomsFlag = false
+
+            createVoteRoom.classList.add('visually-hidden')
+            createVoteRoomFlag = false
+
+            filePage.classList.add('visually-hidden')
+            fileButton.classList.remove('btn-dark')
+            fileButton.classList.add('btn-secondary')
+            filePageeFlag = false
+
+            voteRoomsPage.classList.add('visually-hidden')
+            if (voteNum >= 1) {
+                for (var i = 1; i <= voteNum; i++) {
+                    document.querySelector(`#voteRoom${i}`).classList.add('visually-hidden')
+                }
+            }
         }
-
-        const change_size = () => {
-            if (messegeFlag || staffFlag || voteFlag || createVoteFlag || voteRoomFlag || filePageFlag) {
-                bottom_left.style.width = document.documentElement.clientWidth * 0.8 + 'px'
-                video.width = document.documentElement.clientWidth * 0.8
-
-            }
-            else {
-                bottom_left.style.width = document.documentElement.clientWidth - 10 + 'px'
-                video.width = document.documentElement.clientWidth - 10
-            }
-            bottom_right.style.width = document.documentElement.clientWidth * 0.2 + 'px'
-            const staffVideos = staff.querySelectorAll('video')
-            staffVideos.forEach(staffVideo => {
-                staffVideo.width = document.documentElement.clientWidth * 0.18
-            })
-            bottom_left.style.height = document.documentElement.clientHeight - 40 + 'px'
-            bottom_right.style.height = document.documentElement.clientHeight - 40 + 'px'
-            voteRooms.style.height = bottom_right.style.height
-            voteRooms.style.width = bottom_right.style.width
-            createVoteRoom.style.height = bottom_right.style.height
-            createVoteRoom.style.width = bottom_right.style.width
-            filePage.style.height = bottom_right.style.height
-            filePage.style.width = bottom_right.style.width
-            for (var i = 1; i <= voteNum; i++) {
-                document.querySelector(`#voteRoom${i}`).style.height = bottom_right.style.height
-                document.querySelector(`#voteRoom${i}`).style.width = bottom_right.style.width
-            }
-            video.height = document.documentElement.clientHeight - 40
-            messegeShow.rows = document.documentElement.clientHeight * 0.07 - 10
-            messegeShow.cols = document.documentElement.clientWidth * 0.025 - 5
-            messegeInput.size = document.documentElement.clientWidth * 0.018
-
-        }
-
-        change_size()
-        window.onresize = change_size
-
-        settingButton.addEventListener('click', () => {
-            if (settingFlag) {
-                settingFlag = false
-                setting.style.display = 'none'
-                settingButton.style.backgroundColor = 'white'
-                settingButton.style.color = 'black'
-            }
-            else {
-                settingFlag = true
-                setting.style.display = 'block'
-                settingButton.style.backgroundColor = 'black'
-                settingButton.style.color = 'white'
-            }
-        })
 
         messegeButton.addEventListener('click', () => {
             if (messegeFlag) {
-                clearButtonRight()
+                clearBottomRight()
             }
             else {
-                clearButtonRight()
+                clearBottomRight()
+                messege.classList.remove('visually-hidden')
+                messegeButton.classList.remove('btn-secondary')
+                messegeButton.classList.add('btn-dark')
                 messegeFlag = true
-                messege.style.display = 'block'
-                messegeButton.style.backgroundColor = 'black'
-                messegeButton.style.color = 'white'
             }
-            change_size()
         })
 
         staffButton.addEventListener('click', () => {
             if (staffFlag) {
-                clearButtonRight()
+                clearBottomRight()
             }
             else {
-                clearButtonRight()
+                clearBottomRight()
+                staff.classList.remove('visually-hidden')
+                staffButton.classList.remove('btn-secondary')
+                staffButton.classList.add('btn-dark')
                 staffFlag = true
-                staff.style.display = 'block'
-                staffButton.style.backgroundColor = 'black'
-                staffButton.style.color = 'white'
             }
-            change_size()
         })
 
         voteButton.addEventListener('click', () => {
-            if (voteFlag) {
-                clearButtonRight()
+            if (voteRoomsFlag) {
+                clearBottomRight()
             }
             else {
-                clearButtonRight()
-                voteFlag = true
-                voteRooms.style.display = 'block'
-                voteButton.style.backgroundColor = 'black'
-                voteButton.style.color = 'white'
+                clearBottomRight()
+                votePage.classList.remove('visually-hidden')
+                voteButton.classList.remove('btn-secondary')
+                voteButton.classList.add('btn-dark')
+                voteRoomsFlag = true
             }
-            change_size()
         })
 
         createVote.addEventListener('click', () => {
-            clearButtonRight()
-            createVoteFlag = true
-            createVoteRoom.style.display = 'block'
-            change_size()
+            if (createVoteRoomFlag) {
+                clearBottomRight()
+            }
+            else {
+                clearBottomRight()
+                createVoteRoom.classList.remove('visually-hidden')
+                voteButton.classList.remove('btn-secondary')
+                voteButton.classList.add('btn-dark')
+                createVoteRoomFlag = true
+            }
+        })
+
+        returnVoteRoom.addEventListener('click', () => {
+            voteName.value = ''
+            inputVoteOptions.innerHTML = ''
+            numOfVoteOptions[0].selected = true
+            voteButton.click()
+        })
+
+        returnVoteRoom2.addEventListener('click', () => {
+            voteButton.click()
         })
 
         numOfVoteOptions.addEventListener('change', () => {
             inputVoteOptions.innerHTML = ''
             var count = numOfVoteOptions.value
             for (var i = 0; i < count; i++) {
+                var label = document.createElement('label')
                 var input = document.createElement('input')
-                var br = document.createElement('br')
-                input.type = 'text'
-                input.id = 'vote_option'
-                inputVoteOptions.append(`選項${i + 1}: `)
-                inputVoteOptions.appendChild(input)
-                inputVoteOptions.appendChild(br)
+                label.classList.add('form-label')
+                label.innerHTML = `選項${i + 1}`
+                label.setAttribute('for', `vote_option_${i}`)
+                input.id = `vote_option_${i}`
+                input.classList.add('form-control')
+                inputVoteOptions.append(label)
+                inputVoteOptions.append(input)
             }
         })
 
-        SendcCeateVote.addEventListener('click', () => {
+        sendcCeateVote.addEventListener('click', () => {
             socket.emit('getVoteNum', voteName.value)
         })
 
-        returnVote.addEventListener('click', () => {
-            voteButton.click()
-        })
-
         fileButton.addEventListener('click', () => {
-            if (filePageFlag) {
-                clearButtonRight()
+            if (filePageeFlag) {
+                clearBottomRight()
             }
             else {
-                clearButtonRight()
-                filePageFlag = true
-                filePage.style.display = 'block'
-                fileButton.style.backgroundColor = 'black'
-                fileButton.style.color = 'white'
+                clearBottomRight()
+                filePage.classList.remove('visually-hidden')
+                fileButton.classList.remove('btn-secondary')
+                fileButton.classList.add('btn-dark')
+                filePageeFlag = true
             }
-            change_size()
         })
 
         sendFile.addEventListener('click', () => {
@@ -261,131 +240,143 @@
             fileReader.readAsArrayBuffer(uploadFile.files[0])
             fileReader.onload = (e) => {
                 socket.emit('uploadFile', fileName, fileType, e.target.result)
+                uploadFile.value = null
             }
         })
 
         captionButton.addEventListener('click', () => {
             if (captionFlag) {
-                caption.style.display = 'none'
-                captionButton.style.backgroundColor = 'white'
-                captionButton.style.color = 'black'
+                caption.classList.add('visually-hidden')
+                captionButton.classList.remove('btn-dark')
+                captionButton.classList.add('btn-secondary')
                 captionFlag = false
             }
             else {
                 captionFlag = true
-                caption.style.display = 'block'
-                captionButton.style.backgroundColor = 'black'
-                captionButton.style.color = 'white'
+                caption.classList.remove('visually-hidden')
+                captionButton.classList.remove('btn-secondary')
+                captionButton.classList.add('btn-dark')
             }
         })
 
-        recognition.onstart = () => { // 開始辨識
-            recognizing = true // 設定為辨識中
-        };
+        messegeSend.addEventListener('click', () => {
+            if (messegeInput.value == '') return
+            let txt = userName + ': ' + messegeInput.value;
+            socket.emit('message', txt)
+            messegeInput.value = ''
+        })
 
-        recognition.onend = () => { // 辨識完成
-            if (recognizing) {
-                recognition.start()
-                return
+        messegeInput.addEventListener('keypress', event => {
+            if (event.keyCode === 13 || event.which === 13) {
+                messegeSend.click()
             }
-            console.log('stop')
-        };
+        })
 
-        recognition.onresult = function (event) {
-            // 將中間結果和最終結果分開處理
-            for (var i = event.resultIndex; i < event.results.length; ++i) {
-                if (!event.results[i].isFinal) {
-                    socket.emit('caption', false, event.results[i][0].transcript)
-                }
-                else {
-                    socket.emit('caption', true, event.results[i][0].transcript)
-                }
+        navigator.mediaDevices.getUserMedia(options).then(() => {
+            options.video = false
+            options.audio = false
 
-                if (captionSelect.value == 'my') {
-                    caption.innerHTML = event.results[i][0].transcript
-                }
-            }
+            getDevices()
+        })
+
+        navigator.mediaDevices.addEventListener('devicechange', () => {
+            getDevices()
+        })
+
+        const getDevices = () => {
+            navigator.mediaDevices.enumerateDevices().then(devices => {
+                // console.log(devices)
+                var defaultCamera
+                var defaultMicrophone
+                var defaultHorn
+                const selectCamera = cameraSelect.value
+                const selectMicrophone = microphoneSelect.value
+                const selectHorn = hornSelect.value
+                cameraSelect.innerHTML = ''
+                microphoneSelect.innerHTML = ''
+                hornSelect.innerHTML = ''
+
+                devices.forEach(device => {
+                    if (device.deviceId === 'communications')
+                        return;
+
+                    if (device.deviceId === 'default') {
+                        if (device.kind === 'audioinput')
+                            defaultMicrophone = device.groupId
+                        else if (device.kind === 'videoinput')
+                            defaultCamera = device.groupId
+                        else if (device.kind === 'audiooutput')
+                            defaultHorn = device.groupId
+                        return
+                    }
+                    const option = document.createElement('option')
+                    option.value = device.deviceId
+                    if (device.kind === 'audioinput') {
+                        option.text = device.label
+                        microphoneSelect.appendChild(option)
+                        if (!selectMicrophone && device.groupId === defaultMicrophone)
+                            microphoneSelect.value = device.deviceId
+                    }
+                    else if (device.kind === 'videoinput') {
+                        option.text = device.label
+                        cameraSelect.appendChild(option)
+                        if (!selectCamera && device.groupId === defaultCamera)
+                            cameraSelect.value = device.deviceId
+                    }
+                    else if (device.kind === 'audiooutput') {
+                        option.text = device.label
+                        hornSelect.appendChild(option)
+                        if (!selectHorn && device.groupId === defaultHorn)
+                            hornSelect.value = device.deviceId
+                    }
+                })
+
+                if (selectCamera)
+                    cameraSelect.value = selectCamera
+
+                if (selectMicrophone)
+                    microphoneSelect.value = selectMicrophone
+
+                if (selectHorn)
+                    hornSelect.value = selectHorn
+            })
         }
 
-        const clearButtonRight = () => {
-            messegeFlag = false
-            messege.style.display = 'none'
-            messegeButton.style.backgroundColor = 'white'
-            messegeButton.style.color = 'black'
-            staffFlag = false
-            staff.style.display = 'none'
-            staffButton.style.backgroundColor = 'white'
-            staffButton.style.color = 'black'
-            voteFlag = false
-            voteRooms.style.display = 'none'
-            voteButton.style.backgroundColor = 'white'
-            voteButton.style.color = 'black'
-            createVoteFlag = false
-            createVoteRoom.style.display = 'none'
-            fileButton.style.backgroundColor = 'white'
-            fileButton.style.color = 'black'
-            filePageFlag = false
-            filePage.style.display = 'none'
-            if (voteNum >= 1) {
-                for (var i = 1; i <= voteNum; i++) {
-                    document.querySelector(`#voteRoom${i}`).style.display = 'none'
+        microphoneSelect.addEventListener('change', () => {
+            if (cameraStream) {
+                cameraStop()
+                if (options.audio != false) {
+                    options.audio = { deviceId: microphoneSelect.value }
                 }
+                sendCameraStream()
             }
-            voteRoomFlag = 0
-        }
+        })
 
-        stopMeetingButton.addEventListener('click', () => {
-            socket.emit('stopMeeting')
+        cameraSelect.addEventListener('change', () => {
+            if (cameraStream) {
+                cameraStop()
+                if (options.video != false) {
+                    options.video = { deviceId: cameraSelect.value }
+                }
+                sendCameraStream()
+            }
+        })
+
+        hornSelect.addEventListener('change', () => {
+            document.querySelectorAll('video').forEach(element => {
+                element.setSinkId(hornSelect.value)
+            })
         })
 
         socket.on('name', myName => {
             userName = myName
-            console.log(myName)
+            // console.log(myName)
             const option = document.createElement('option')
             option.value = 'my'
             option.id = 'option_my'
             option.text = userName
             captionSelect.appendChild(option)
             socket.emit('join-room', ROOM_ID, myPeer._id, cameraPeer._id)
-
-            socket.on('connection', (userId, userCameraId, name) => {
-                // console.log('user: ' + userId + ' connection')
-                if (screenStream) {
-                    myPeer.call(userId, screenStream)
-                }
-                const userDiv = document.createElement('div')
-                userDiv.id = userCameraId
-                const cameraVideo = document.createElement('video')
-                cameraVideo.srcObject = null
-                cameraVideo.setSinkId(hornSelect.value)
-                cameraVideo.volume = voiceRange.value / 100
-                if (voiceFlag) {
-                    cameraVideo.muted = true
-                }
-                else {
-                    cameraVideo.muted = false
-                }
-                var br = document.createElement("br");
-                userDiv.append(name)
-                userDiv.append(br)
-                userDiv.append(cameraVideo)
-                staff.append(userDiv)
-                if (cameraStream) {
-                    cameraPeer.call(userCameraId, cameraStream)
-                }
-                const option = document.createElement('option')
-                option.value = userId
-                option.id = `option_${userId}`
-                option.text = name
-                captionSelect.appendChild(option)
-                const userInfo = {
-                    name: name,
-                    id: userId,
-                    cameraId: userCameraId
-                }
-                peers.push(userInfo)
-                // console.log(peers)
-            })
 
             myPeer.on('call', call => {
                 call.answer()
@@ -403,7 +394,8 @@
 
                         })
                     }
-                    if (!voiceFlag) {
+                    shareId = call.peer
+                    if (!voiceZeroFlag) {
                         video.muted = false
                     }
                 })
@@ -421,7 +413,7 @@
                             peers[n].audioSource.connect(gainNode)
                         }
                     }
-                    if (voiceFlag)
+                    if (voiceZeroFlag)
                         stream.getAudioTracks().forEach(track => track.enabled = false)
                     else
                         stream.getAudioTracks().forEach(track => track.enabled = true)
@@ -436,25 +428,67 @@
                 })
             })
 
+
             socket.on('message', (message) => {
-                // console.log(message)
-                messegeShow.value = messegeShow.value + message + '\n'
+                const p = document.createElement('p')
+                p.innerHTML = message
+                messegeShow.appendChild(p)
             })
 
-            socket.on('shareId', userId => {
-                shareId = userId
+            socket.on('connection', (userId, userCameraId, name) => {
+                // console.log('user: ' + userId + ' connection')
+                if (screenStream) {
+                    myPeer.call(userId, screenStream)
+                }
+                const userDiv = document.createElement('div')
+                userDiv.id = userCameraId
+                userDiv.classList.add('my1')
+                userDiv.classList.add('border')
+                userDiv.classList.add('border-dark')
+                var p = document.createElement('p')
+                p.classList.add('text-center')
+                p.classList.add('margin-bottom-0')
+                p.innerHTML = name
+                const radioDiv = document.createElement('div')
+                radioDiv.classList.add('ratio')
+                radioDiv.classList.add('ratio-16x9')
+                const cameraVideo = document.createElement('video')
+                cameraVideo.classList.add('bg-dark')
+                cameraVideo.srcObject = null
+                cameraVideo.setSinkId(hornSelect.value)
+                cameraVideo.volume = voiceRange.value / 100
+                if (voiceZeroFlag) {
+                    cameraVideo.muted = true
+                }
+                else {
+                    cameraVideo.muted = false
+                }
+                userDiv.append(p)
+                radioDiv.append(cameraVideo)
+                userDiv.append(radioDiv)
+                staffInner.append(userDiv)
+                if (cameraStream) {
+                    cameraPeer.call(userCameraId, cameraStream)
+                }
+                const option = document.createElement('option')
+                option.value = userId
+                option.id = `option_${userId}`
+                option.text = name
+                captionSelect.appendChild(option)
+                const userInfo = {
+                    name: name,
+                    id: userId,
+                    cameraId: userCameraId
+                }
+                peers.push(userInfo)
+                // console.log(peers)
             })
 
             socket.on('voteNum', num => {
-                const voteOptions = document.querySelectorAll('#vote_option')
-                voteOptions.forEach(voteOption => {
-                    var radio = document.createElement('input')
-                    radio.type = 'radio'
-                    radio.id = `vote${num}_option`
-                    radio.name = `vote${num}_option`
-                    radio.value = voteOption.value
-                    socket.emit('vote', num, radio.value)
-                })
+                for (var i = 0; i < numOfVoteOptions.value; i++) {
+                    const option_value = document.getElementById(`vote_option_${i}`).value
+                    socket.emit('vote', num, option_value)
+                }
                 socket.emit('vote', num, 'end')
                 voteName.value = ''
                 inputVoteOptions.innerHTML = ''
@@ -468,20 +502,24 @@
                     var sendVote = document.createElement('button')
                     sendVote.id = 'sendVote'
                     sendVote.textContent = '送出'
+                    sendVote.classList.add('btn')
+                    sendVote.classList.add('btn-dark')
+                    sendVote.classList.add('my-1')
+                    sendVote.classList.add('mx-3')
                     const voteRoom = document.querySelector(`#voteRoom${num}`)
                     voteRoom.appendChild(sendVote)
+                    console.log(votes[num])
+
                     sendVote.addEventListener('click', () => {
-                        document.querySelectorAll(`#vote${num}_option`).forEach(choose => {
+                        for (var i = 0; i < votes[num].num; i++) {
+                            const choose = document.querySelector(`#vote${num}_option${i}`)
                             if (choose.checked) {
                                 voteChooseFlag[num] = 1
                                 socket.emit('voteChoose', num, choose.value)
                                 voteButton.click()
-                                const n = votes[num].option.map(x => x.name).indexOf(choose.value)
-                                if (n != -1) {
-                                    votes[num].option[n].numOfVotes++
-                                }
+                                votes[num].option[i].numOfVotes++
                             }
-                        })
+                        }
                     })
                 }
                 else {
@@ -491,31 +529,31 @@
                         votes[num].option = []
                         var vote = document.createElement('button')
                         var br = document.createElement('br')
+                        vote.classList.add('btn')
+                        vote.classList.add('btn-secondary')
+                        vote.classList.add('my-1')
                         vote.id = `vote${num}`
                         vote.textContent = vote_name
                         voteForm.appendChild(vote)
                         voteForm.appendChild(br)
                         voteNum = num
-                        var returnButton = document.createElement('button')
-                        var br2 = document.createElement('br')
-                        returnButton.id = 'return'
-                        returnButton.textContent = '返回'
                         var voteRoom = document.createElement('div')
                         voteRoom.id = `voteRoom${num}`
-                        voteRoom.className = 'voteRoom'
-                        voteRoom.style.display = 'none'
-                        voteRoom.appendChild(returnButton)
-                        voteRoom.appendChild(br2)
-                        bottom_right.appendChild(voteRoom)
+                        voteRoom.classList.add('visually-hidden')
+                        voteRoom.classList.add('p-3')
+                        voteRoom.classList.add('mb-3')
+                        voteRoom.classList.add('mb-md-0')
+                        voteRoom.classList.add('me-md-3')
+                        voteRooms.appendChild(voteRoom)
                         vote.addEventListener('click', () => {
                             if (voteChooseFlag[num] != 1) {
-                                clearButtonRight()
-                                voteRoom.style.display = 'block'
-                                voteRoomFlag = 1
-                                change_size()
+                                clearBottomRight()
+                                voteRoomsPage.classList.remove('visually-hidden')
+                                voteRoom.classList.remove('visually-hidden')
                             }
                             else {
-                                document.querySelectorAll(`#vote${num}_option`).forEach(choose => {
+                                for (var i = 0; i < votes[num].num; i++) {
+                                    const choose = document.querySelector(`#vote${num}_option${i}`)
                                     if (choose.checked) {
                                         let alertText = `你已投了: ${choose.value}`
                                         votes[num].option.forEach(element => {
@@ -523,24 +561,29 @@
                                         })
                                         alert(alertText)
                                     }
-                                })
+                                }
                             }
                         })
-                        returnButton.addEventListener('click', () => {
-                            voteButton.click()
-                        })
                         voteChooseFlag[num] = 0
+                        votes[num].num = 0
                     }
+                    var div = document.createElement('div')
                     var radio = document.createElement('input')
-                    var br = document.createElement('br')
+                    var label = document.createElement('label')
+                    var optionNum = votes[num].num++
+                    div.classList.add('form-check')
                     radio.type = 'radio'
-                    radio.id = `vote${num}_option`
+                    radio.id = `vote${num}_option${optionNum}`
                     radio.name = `vote${num}_option`
                     radio.value = vote__option
+                    radio.classList.add('form-chack-input')
+                    label.classList.add('form-check-label')
+                    label.setAttribute('for', `vote${num}_option${optionNum}`)
+                    label.innerHTML = vote__option
+                    div.append(radio)
+                    div.append(label)
                     const vote__Room = document.querySelector(`#voteRoom${num}`)
-                    vote__Room.appendChild(radio)
-                    vote__Room.append(vote__option)
-                    vote__Room.appendChild(br)
+                    vote__Room.append(div)
                     var voteOptionContext = {
                         name: vote__option,
                         numOfVotes: numOf_Votes
@@ -557,19 +600,16 @@
                 }
             })
 
-            socket.on('caption', (userId, captionText) => {
-                if (captionSelect.value == userId) {
-                    caption.innerHTML = captionText
-                }
-            })
-
             socket.on('courseFile', fileName => {
                 const downloadFileButton = document.createElement('button')
                 const br = document.createElement('br')
                 downloadFileButton.id = fileName
                 downloadFileButton.textContent = fileName
-                filePage.appendChild(downloadFileButton)
-                filePage.appendChild(br)
+                downloadFileButton.classList.add('btn')
+                downloadFileButton.classList.add('btn-secondary')
+                downloadFileButton.classList.add('my-1')
+                file.appendChild(downloadFileButton)
+                file.appendChild(br)
 
                 downloadFileButton.addEventListener('click', () => {
                     socket.emit('downloadFile', fileName)
@@ -584,11 +624,17 @@
                 downloadLink.click()
             })
 
+            socket.on('caption', (userId, captionText) => {
+                if (captionSelect.value == userId) {
+                    caption.innerHTML = captionText
+                }
+            })
+
             socket.on('stopStream', () => {
                 video.srcObject = null
-                if (screenSource) {
-                    screenSource.disconnect(gainNode)
-                }
+                // if (screenSource) {
+                //     screenSource.disconnect(gainNode)
+                // }
             })
 
             socket.on('stopCameraStream', (userCameraId) => {
@@ -612,7 +658,9 @@
                     const disUser = document.getElementById(cameraPeer._id)
                     disUser.remove()
                     document.getElementById(`option_${userId}`).remove()
+                    // console.log(userId)
                     if (shareId == userId) {
+                        // console.log('stop')
                         video.srcObject = null
                         shareId = null
                     }
@@ -629,28 +677,59 @@
             })
         })
 
-        messegeSend.addEventListener('click', () => {
-            if (messegeInput.value == '') return
-            let txt = userName + ': ' + messegeInput.value;
-            socket.emit('message', txt)
-            messegeInput.value = ''
-        })
+        screenButtonm.addEventListener('click', () => {
+            if (myPeer) {
+                if (!screenStream) {
+                    if (video.srcObject) {
+                        return
+                    }
+                    navigator.mediaDevices.getDisplayMedia({
+                        video: true,
+                        audio: true
+                    }).then(stream => {
+                        screenStream = stream
+                        video.srcObject = screenStream
 
-        messegeInput.addEventListener('keypress', event2 => {
-            if (event2.keyCode === 13 || event2.which === 13) {
-                if (messegeInput.value == '') return
-                let txt = userName + ': ' + messegeInput.value;
-                socket.emit('message', txt)
-                messegeInput.value = ''
+                        if (video_startFlag && stream.getAudioTracks()[0]) {
+                            screenSource = audioContext.createMediaStreamSource(stream)
+                            screenSource.connect(gainNode)
+                        }
+                        video.muted = true
+                        video.play()
+                        sendStream(screenStream)
+                        screenButtonm.classList.remove('btn-secondary')
+                        screenButtonm.classList.add('btn-dark')
+
+                        stream.getTracks()[0].addEventListener('ended', () => {
+                            screenButtonm.click()
+                        })
+                    })
+                }
+                else {
+                    screenStream.getTracks().forEach(track => {
+                        track.stop()
+                    })
+                    screenStream = null
+                    video.srcObject = null
+                    screenButtonm.classList.remove('btn-dark')
+                    screenButtonm.classList.add('btn-secondary')
+                    socket.emit('stopStream');
+                }
             }
         })
 
-        camera.addEventListener('click', () => {
+        const sendStream = (stream) => {
+            peers.forEach(user => {
+                myPeer.call(user.id, stream)
+            })
+        }
+
+        cameraButtonm.addEventListener('click', () => {
             if (cameraPeer) {
                 if (cameraStream) {
                     cameraStop()
-                    microphoneStop()
                 }
+
                 if (options.video === false) {
                     options.video = { deviceId: cameraSelect.value }
                 }
@@ -661,12 +740,12 @@
             }
         })
 
-        microphone.addEventListener('click', () => {
+        microphoneButtonm.addEventListener('click', () => {
             if (cameraPeer) {
                 if (cameraStream) {
                     cameraStop()
-                    microphoneStop()
                 }
+
                 if (options.audio === false) {
                     options.audio = { deviceId: microphoneSelect.value }
                 }
@@ -677,85 +756,23 @@
             }
         })
 
-        navigator.mediaDevices.getUserMedia(options).then(() => {
-            options.video = false
-            options.audio = false
-
-            getDevices()
-        })
-
-        navigator.mediaDevices.addEventListener('devicechange', () => {
-            getDevices()
-        })
-
-        const getDevices = () => {
-            navigator.mediaDevices.enumerateDevices().then(devices => {
-                // console.log(devices)
-                const selectCamera = cameraSelect.value
-                const selectMicrophone = microphoneSelect.value
-                const selectHorn = hornSelect.value
-                cameraSelect.innerHTML = ''
-                microphoneSelect.innerHTML = ''
-                hornSelect.innerHTML = ''
-
-                devices.forEach(device => {
-                    if (device.deviceId === 'default' || device.deviceId === 'communications') {
-                        return
-                    }
-                    const option = document.createElement('option')
-                    option.value = device.deviceId
-                    if (device.kind === 'audioinput') {
-                        option.text = device.label
-                        microphoneSelect.appendChild(option)
-                    }
-                    else if (device.kind === 'videoinput') {
-                        option.text = device.label
-                        cameraSelect.appendChild(option)
-                    }
-                    else if (device.kind === 'audiooutput') {
-                        option.text = device.label
-                        hornSelect.appendChild(option)
-                    }
+        const cameraStop = () => {
+            if (cameraStream) {
+                socket.emit('stopCameraStream')
+                cameraStream.getTracks().forEach(track => {
+                    track.stop()
                 })
-
-                if (selectCamera)
-                    cameraSelect.value = selectCamera
-
-                if (selectMicrophone)
-                    microphoneSelect.value = selectMicrophone
-
-                if (selectHorn)
-                    hornSelect.value = selectHorn
-            })
+                if (microphoneSource) {
+                    microphoneSource.disconnect(microphoneGainNode)
+                    microphoneSource = null
+                }
+                cameraStream = null
+                cameraButtonm.classList.remove('btn-dark')
+                cameraButtonm.classList.add('btn-secondary')
+                microphoneButtonm.classList.remove('btn-dark')
+                microphoneButtonm.classList.add('btn-secondary')
+            }
         }
-
-        microphoneSelect.addEventListener('change', () => {
-            if (cameraStream) {
-                cameraStop()
-                microphoneStop()
-                if (options.audio != false) {
-                    options.audio = { deviceId: microphoneSelect.value }
-                }
-                sendCameraStream()
-            }
-        })
-
-        cameraSelect.addEventListener('change', () => {
-            if (cameraStream) {
-                cameraStop()
-                microphoneStop()
-                if (options.video != false) {
-                    options.video = { deviceId: cameraSelect.value }
-                }
-                sendCameraStream()
-            }
-        })
-
-        hornSelect.addEventListener('change', () => {
-            document.querySelectorAll('video').forEach(element => {
-                element.setSinkId(hornSelect.value)
-            })
-        })
 
         const sendCameraStream = () => {
             if (options.video || options.audio) {
@@ -763,8 +780,8 @@
                     cameraStream = new MediaStream()
                     if (options.video) {
                         cameraStream.addTrack(stream.getVideoTracks()[0])
-                        camera.style.backgroundColor = 'black'
-                        camera.style.color = 'white'
+                        cameraButtonm.classList.remove('btn-secondary')
+                        cameraButtonm.classList.add('btn-dark')
                     }
                     if (options.audio) {
                         microphoneAudioContext = new AudioContext()
@@ -782,8 +799,8 @@
                             recognition.start()
                             recognizing = true
                         }
-                        microphone.style.backgroundColor = 'black'
-                        microphone.style.color = 'white'
+                        microphoneButtonm.classList.remove('btn-secondary')
+                        microphoneButtonm.classList.add('btn-dark')
                     }
                     peers.forEach(user => {
                         // console.log(user.cameraId)
@@ -797,176 +814,62 @@
             }
         }
 
-        screen.addEventListener('click', () => {
-            if (myPeer) {
-                if (!screenStream) {
-                    if (video.srcObject) {
-                        return
-                    }
-                    navigator.mediaDevices.getDisplayMedia({
-                        video: true,
-                        audio: true
-                    }).then(stream => {
-                        screenStream = stream
-                        video.srcObject = screenStream
-                        if (video_startFlag) {
-                            screenSource = audioContext.createMediaStreamSource(stream)
-                            screenSource.connect(gainNode)
-                        }
-                        video.muted = true
-                        video.play()
-                        sendStream(screenStream)
-                        screen.style.backgroundColor = 'black'
-                        screen.style.color = 'white'
+        recognition.onstart = () => { // 開始辨識
+            recognizing = true // 設定為辨識中
+        }
 
-                        stream.getTracks()[0].addEventListener('ended', () => {
-                            screen.click()
-                        })
-                    })
+        recognition.onend = () => { // 辨識完成
+            if (recognizing) {
+                recognition.start()
+                return
+            }
+            // console.log('stop')
+        }
+
+        recognition.onresult = function (event) {
+            // 將中間結果和最終結果分開處理
+            for (var i = event.resultIndex; i < event.results.length; ++i) {
+                if (!event.results[i].isFinal) {
+                    socket.emit('caption', false, event.results[i][0].transcript)
                 }
                 else {
-                    screenStop()
-                    socket.emit('stopStream');
+                    socket.emit('caption', true, event.results[i][0].transcript)
+                }
+
+                if (captionSelect.value == 'my') {
+                    caption.innerHTML = event.results[i][0].transcript
                 }
             }
-        })
-
-        video_start.addEventListener('click', () => {
-            if (video_startFlag) {
-                recorder.stop()
-                video_startFlag = false
-                video_start.style.backgroundColor = 'white'
-                video_start.style.color = 'black'
-            }
-            else {
-                navigator.mediaDevices.getDisplayMedia({ video: true }).then(stream => {
-                    mixStream = new MediaStream()
-                    audioContext = new AudioContext()
-                    destination = audioContext.createMediaStreamDestination()
-                    gainNode = audioContext.createGain()
-                    gainNode.gain.value = voiceRange.value / 100
-
-                    mixStream.addTrack(stream.getVideoTracks()[0])
-                    if (video.srcObject) {
-                        screenSource = audioContext.createMediaStreamSource(video.srcObject)
-                        screenSource.connect(gainNode)
-                    }
-                    if (cameraStream) {
-                        audioContext.createMediaStreamSource(cameraStream).connect(gainNode)
-                    }
-                    const userVideos = staff.querySelectorAll('video')
-                    userVideos.forEach(userVideo => {
-                        if (userVideo.srcObject != null) {
-                            console.log('123')
-                            audioContext.createMediaStreamSource(userVideo.srcObject).connect(gainNode)
-                        }
-                    })
-                    gainNode.connect(destination)
-                    mixStream.addTrack(destination.stream.getAudioTracks()[0])
-
-                    chunks = []
-                    recorder = new MediaRecorder(mixStream, {
-                        mimeType: 'video/webm',
-                        audioBitsPerSecond: 128000,
-                        videoBitsPerSecond: 2500000
-                    })
-
-                    recorder.ondataavailable = e => {
-                        chunks.push(e.data)
-                    }
-
-                    recorder.onstop = () => {
-                        stream.getTracks().forEach(track => {
-                            track.stop()
-                        })
-                        const blob = new Blob(chunks, { type: 'video/webm' })
-                        const url = URL.createObjectURL(blob)
-                        const a = document.createElement('a')
-                        a.href = url
-                        a.download = 'recoding.webm'
-                        a.click()
-                        URL.revokeObjectURL(url)
-                    }
-
-                    recorder.start()
-                    video_startFlag = true
-                    video_start.style.backgroundColor = 'black'
-                    video_start.style.color = 'white'
-                })
-            }
-        })
-
-        const sendStream = (stream) => {
-            peers.forEach(user => {
-                myPeer.call(user.id, stream)
-            })
-            socket.emit('shareId')
         }
 
-        const cameraStop = () => {
-            socket.emit('stopCameraStream')
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => {
-                    track.stop()
-                })
-                cameraStream = null
-            }
-            camera.style.backgroundColor = 'white'
-            camera.style.color = 'black'
-        }
-
-        const microphoneStop = () => {
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => {
-                    track.stop()
-                })
-                cameraStream = null
-            }
-            if (microphoneSource) {
-                microphoneSource.disconnect(microphoneGainNode)
-                microphoneSource = null
-            }
-            recognition.stop()
-            recognizing = false
-            microphone.style.backgroundColor = 'white'
-            microphone.style.color = 'black'
-        }
-
-        const screenStop = () => {
-            if (screenStream) {
-                screenStream.getTracks().forEach(track => {
-                    track.stop()
-                })
-                screenStream = null
-                video.srcObject = null
-                screen.style.backgroundColor = 'white'
-                screen.style.color = 'black'
-            }
-        }
-
-        voiceZero.addEventListener('click', () => {
-            if (voiceFlag) {
-                voiceFlag = 0
-                voiceZero.style.backgroundColor = 'white'
-                voiceZero.style.color = 'black'
+        voiceZeroButton.addEventListener('click', () => {
+            if (voiceZeroFlag) {
+                voiceZeroFlag = false
+                voiceZeroButton.classList.remove('btn-dark')
+                voiceZeroButton.classList.add('btn-secondary')
                 if (!screenStream) {
                     video.muted = false
                 }
                 const userVideos = staff.querySelectorAll('video')
                 userVideos.forEach(userVideo => {
                     userVideo.muted = false
-                    userVideo.srcObject.getAudioTracks().forEach(track => track.enabled = true)
+                    if (userVideo.srcObject && userVideo.srcObject.getAudioTracks().length) {
+                        userVideo.srcObject.getAudioTracks().forEach(track => track.enabled = true)
+                    }
+
                 })
             }
             else {
-                voiceFlag = 1
-                voiceZero.style.backgroundColor = 'black'
-                voiceZero.style.color = 'white'
+                voiceZeroFlag = true
+                voiceZeroButton.classList.remove('btn-secondary')
+                voiceZeroButton.classList.add('btn-dark')
                 video.muted = true
                 const userVideos = staff.querySelectorAll('video')
                 userVideos.forEach(userVideo => {
                     userVideo.muted = true
-                    userVideo.srcObject.getAudioTracks().forEach(track => track.enabled = false)
+                    if (userVideo.srcObject && userVideo.srcObject.getAudioTracks().length) {
+                        userVideo.srcObject.getAudioTracks().forEach(track => track.enabled = true)
+                    }
                 })
             }
         })
@@ -981,7 +884,105 @@
         })
 
         microphoneRange.addEventListener('input', () => {
-            microphoneGainNode.gain.value = microphoneRange.value / 100
+            if (microphoneSource)
+                microphoneGainNode.gain.value = microphoneRange.value / 100
+        })
+
+        const draw = () => {
+            html2canvas(body).then((img) => {
+                bodyCanvas.width = img.width + 1
+                bodyCanvas.height = img.height + 1
+                const imgCtx = img.getContext('2d')
+                const imageData = imgCtx.getImageData(0, 0, img.width, img.height)
+                bodyCtx.putImageData(imageData, 0, 0)
+
+                var width
+                var height
+                if ((video.videoWidth / video.videoHeight) < (video.offsetWidth / video.offsetHeight)) {
+                    height = video.offsetHeight
+                    width = (height * video.videoWidth) / video.videoHeight
+                }
+                else {
+                    width = video.offsetWidth
+                    height = (width * video.videoHeight) / video.videoWidth
+                }
+
+                const rect = video.getBoundingClientRect();
+                const x = rect.left + (video.offsetWidth - width) / 2
+                const y = rect.top + (video.offsetHeight - height) / 2
+
+                bodyCtx.drawImage(video, x, y, width, height)
+
+            })
+
+            if (video_startFlag)
+                setTimeout(draw, 1000 / 60)
+        }
+
+        video_startButtonm.addEventListener('click', () => {
+            if (video_startFlag) {
+                recorder.stop()
+                video_startFlag = false
+                video_startButtonm.classList.remove('btn-dark')
+                video_startButtonm.classList.add('btn-secondary')
+            }
+            else {
+                video_startFlag = true
+                draw()
+                mixStream = new MediaStream()
+                audioContext = new AudioContext()
+                destination = audioContext.createMediaStreamDestination()
+                gainNode = audioContext.createGain()
+                gainNode.gain.value = voiceRange.value / 100
+
+                mixStream.addTrack(bodyCanvas.captureStream().getVideoTracks()[0])
+                if (video.srcObject) {
+                    if (video.srcObject.getAudioTracks()[0]) {
+                        screenSource = audioContext.createMediaStreamSource(video.srcObject)
+                        screenSource.connect(gainNode)
+                    }
+                }
+                if (cameraStream) {
+                    audioContext.createMediaStreamSource(cameraStream).connect(gainNode)
+                }
+                const userVideos = staff.querySelectorAll('video')
+                userVideos.forEach(userVideo => {
+                    if (userVideo.srcObject != null && userVideo.srcObject.getAudioTracks().length != 0) {
+                        audioContext.createMediaStreamSource(userVideo.srcObject).connect(gainNode)
+                    }
+                })
+                gainNode.connect(destination)
+                mixStream.addTrack(destination.stream.getAudioTracks()[0])
+
+                chunks = []
+                recorder = new MediaRecorder(mixStream, {
+                    mimeType: 'video/webm',
+                    audioBitsPerSecond: 128000,
+                    videoBitsPerSecond: 2500000
+                })
+
+                recorder.ondataavailable = e => {
+                    chunks.push(e.data)
+                }
+
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = 'recoding.webm'
+                    a.click()
+                    URL.revokeObjectURL(url)
+                }
+
+                recorder.start()
+                video_startButtonm.classList.remove('btn-secondary')
+                video_startButtonm.classList.add('btn-dark')
+            }
+        })
+
+        stopMeetingButton.addEventListener('click', () => {
+            socket.emit('stopMeeting')
         })
     }
 })();

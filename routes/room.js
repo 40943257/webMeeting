@@ -18,14 +18,14 @@ router.get('/:room', (req, res, next) => {
       if (error) {
           return console.error(error.message);
       }
-      console.log(results.length)
+      // console.log(results.length)
       if(results.length > 0)
         res.render('room/roomId', { 
           roomId: req.params.room, 
           serverIp: serverIp
         })
       else
-        res.redirect(`http://'${serverIp}'/htmlphp/loginpage.php`)
+        res.redirect(`http://${serverIp}/htmlphp/loginpage.php`)
     })
 });
 

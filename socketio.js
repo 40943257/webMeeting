@@ -13,7 +13,9 @@ const cookie = require('cookie')
 const courseId = 1
 
 socketio.getSocketio = (server) => {
-    var io = socket_io(server)
+    var io = socket_io(server, {
+        maxHttpBufferSize: 1024 * 1024 * 1024
+    })
 
     io.sockets.on('connection', socket => {
         const cookies = cookie.parse(socket.request.headers.cookie)
@@ -80,12 +82,8 @@ socketio.getSocketio = (server) => {
                     });
 
                     socket.on('message', (message) => {
-                        console.log(message)
+                        // console.log(message)
                         io.to(roomId).emit('message', message)
-                    })
-
-                    socket.on('shareId', () => {
-                        socket.to(roomId).emit('shareId', userId)
                     })
 
                     socket.on('getVoteNum', (voteName) => {
@@ -149,7 +147,7 @@ socketio.getSocketio = (server) => {
                     })
 
                     socket.on('uploadFile', (fileName, fileType, fileData) => {
-                        // console.log(fileName + ' ' + fileType)
+                        // console.log(fileName)
                         // console.log(fileData)
                         if (!fs.existsSync(`./public/files/${courseId}`))
                             fs.mkdirSync(`./public/files/${courseId}`)
@@ -165,7 +163,7 @@ socketio.getSocketio = (server) => {
                             }
                             fileName = newFileName
                         }
-                        console.log(fileName)
+                        // console.log(fileName)
                         fs.writeFile(`./public/files/${courseId}/${roomId}/${fileName}`, fileData, err => {
                             if (err) {
                                 console.log(err)
@@ -221,7 +219,7 @@ socketio.getSocketio = (server) => {
 
                     socket.on('stopMeeting', () => {
                         io.to(roomId).emit('stopMeeting')
-                        console.log(roomVote[roomId])
+                        // console.log(roomVote[roomId])
                         if (roomVote[roomId].voteNum > 0) {
                             if (!fs.existsSync(`./public/files/${courseId}`))
                                 fs.mkdirSync(`./public/files/${courseId}`)

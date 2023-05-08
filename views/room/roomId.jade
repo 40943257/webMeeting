@@ -1,118 +1,116 @@
-doctype html
-html(lang="en")
-    head
-        meta(charset="UTF-8")
-        meta(http-equiv="X-UA-Compatible", content="IE=edge")
-        meta(name="viewport", content="width=device-width, initial-scale=1.0")
-        link(rel='stylesheet', href='/stylesheets/roomStyle/style.css')
-        title= roomId
-    body 
-        #top
-            #top_left
-                button#camera.border-radius-5.border-none 視訊鏡頭
-                |             
-                button#microphone.border-radius-5.border-none 麥克風
-                |             
-                button#screen.border-radius-5.border-none 螢幕畫面
-                |             
-                button#video_start.border-radius-5.border-none 錄影
-                |             
-                button#stopMeetingButton.border-radius-5.border-none 結束會議
-            #top_right
-                button#settingButton.border-radius-5.border-none 設置
-                | &nbsp;&nbsp;
-                br         
-                br
-                #setting.bg-gainsboro.border-radius-10.border-none(style='display: none;')
-                    button#voiceZero.border-radius-5.border-none 靜音
-                    | &nbsp;&nbsp;
-                    div
-                        | 喇叭音量:
-                        input(type="range", min="0", max="100", value="50")#voiceRange
-                        | &nbsp;&nbsp;
-                    div
-                        | 麥克風音量:
-                        input(type="range", min="0", max="100", value="50")#microphoneRange
-                        | &nbsp;&nbsp;
-                    button#staffButton.border-radius-5.border-none 成員
-                    | &nbsp;&nbsp;
-                    br            
-                    button#messegeButton.border-radius-5.border-none 聊天室
-                    | &nbsp;&nbsp;
-                    br             
-                    button#voteButton.border-radius-5.border-none 投票
-                    | &nbsp;&nbsp;
-                    br              
-                    button#fileButton.border-radius-5.border-none 檔案
-                    | &nbsp;&nbsp;
-                    br          
-                    button#captionButton.border-radius-5.border-none 字幕
-                    | &nbsp;&nbsp;
-                    br  
-                    div
-                        | 字幕對象:
-                        select#captionSelect.border-radius-5
-                        | &nbsp;&nbsp;
-                    div
-                        | 麥克風:
-                        select#microphoneSelect.border-radius-5.border-none
-                        | &nbsp;&nbsp;       
-                    div
-                        | 鏡頭:
-                        select#cameraSelect.border-radius-5.border-none
-                        | &nbsp;&nbsp; 
-                    div
-                        | 喇叭:
-                        select#hornSelect.border-radius-5.border-none
-                        | &nbsp;&nbsp; 
-                    br
-        br
-        br
-        #bottom
-            #bottom_left
-                video#video(muted)
-                br
-                #caption(style='display: none;') 字幕
-            #bottom_right
-                #messege
-                    textarea#messegeShow.border-radius-10(rows='50', disabled='')
-                    br             
-                    input#messegeInput.border-radius-5.border-none(type='text')            
-                    button#messegeSend.border-radius-5.border-none 送出  
-                #staff(style='display: none;')
-                #voteRooms.border-radius-10(style='display: none;')
-                    button#createVote.border-radius-5.border-none 創建投票
-                    br 
-                    br
-                    #voteForm 
-                #createVoteRoom.border-radius-10(style='display: none;')
-                    button#returnVote.border-radius-5.border-none 返回
-                    br
-                    | 投票名稱: 
-                    input#voteName.border-radius-5(type="text")
-                    br
-                    | 數量: 
-                    select#numOfVoteOptions.border-radius-5
-                        option(value="0") 0
-                        option(value="1") 1
-                        option(value="2") 2
-                        option(value="3") 3
-                        option(value="4") 4
-                    br
-                    #inputVoteOptions.border-none 
-                    br
-                    button#SendcCeateVote.border-radius-5.border-none 送出
-                
-                #filePage.border-radius-10(style='display: none;')
-                    input#uploadFile(type="file")
-                    br
-                    button#sendFile.border-radius-5.border-none 上傳
-                    br
-                    br
-
+html(lang='en')
+  head
+  body.bg-secondary.bg-opacity-75
+    meta(charset='UTF-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0')
+    link(href='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css', rel='stylesheet', integrity='sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3', crossorigin='anonymous')
+    script(src='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js', integrity='sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p', crossorigin='anonymous')
+    link(rel='stylesheet', href='/stylesheets/roomStyle/style.css')
+    title= roomId
+    .d-flex.flex-column.vh-100
+      nav.navbar.navbar-expand-lg.navbar-light.bg-secondary
+        button.navbar-toggler(type='button', data-bs-toggle='collapse', data-bs-target='#navbarText', aria-controls='navbarText', aria-expanded='false', aria-label='Toggle navigation')
+          span.navbar-toggler-icon
+        #navbarText.collapse.navbar-collapse
+          ul.navbar-nav.me-auto.mb-2.mb-lg-0
+            li.nav-item
+              button#cameraButtonm.btn.btn-secondary.mx-1.my-1(type='button') &#x8996;&#x8A0A;&#x93E1;&#x982D;
+            li.nav-item
+              button#microphoneButtonm.btn.btn-secondary.mx-1.my-1(type='button') &#x9EA5;&#x514B;&#x98A8;
+            li.nav-item
+              button#screenButtonm.btn.btn-secondary.mx-1.my-1(type='button') &#x87A2;&#x5E55;&#x756B;&#x9762;
+            li.nav-item
+              button#video_startButtonm.btn.btn-secondary.mx-1.my-1(type='button') &#x9304;&#x5F71;
+            li.nav-item
+              button#stopMeetingButton.btn.btn-secondary.mx-1.my-1(type='button') &#x7D50;&#x675F;&#x6703;&#x8B70;
+          // Button trigger modal
+          button.btn.btn-secondary(type='button', data-bs-toggle='modal', data-bs-target='#exampleModal')
+            | &#x8A2D;&#x7F6E;
+          // Modal
+          #exampleModal.modal.fade(tabindex='-1', aria-labelledby='exampleModalLabel', aria-hidden='true')
+            .modal-dialog
+              .modal-content
+                .modal-body.bg-secondary.bg-opacity-75
+                  button#staffButton.btn.btn-secondary.my-1(type='button', data-bs-dismiss='modal') &#x6210;&#x54E1;
+                  br
+                  button#messegeButton.btn.btn-dark.my-1(type='button', data-bs-dismiss='modal') &#x804A;&#x5929;&#x5BA4;
+                  br
+                  button#voteButton.btn.btn-secondary.my-1(type='button', data-bs-dismiss='modal') &#x6295;&#x7968;
+                  br
+                  button#fileButton.btn.btn-secondary.my-1(type='button', data-bs-dismiss='modal') &#x6A94;&#x6848;
+                  br
+                  button#captionButton.btn.btn-secondary.my-1(type='button', data-bs-dismiss='modal') &#x5B57;&#x5E55;
+                  br
+                  button#voiceZeroButton.btn.btn-dark.my-1(type='button', data-bs-dismiss='modal') &#x975C;&#x97F3;
+                  br
+                  label.form-label(for='voiceRange') &#x5587;&#x53ED;&#x97F3;&#x91CF;
+                  input#voiceRange.form-range(type='range', min='0', max='100', value='50')
+                  label.form-label(for='microphoneRange') &#x9EA5;&#x514B;&#x98A8;&#x97F3;&#x91CF;
+                  input#microphoneRange.form-range(type='range', min='0', max='100', value='50')
+                  label.form-label(for='captionSelect') &#x5B57;&#x5E55;&#x5C0D;&#x8C61;
+                  select#captionSelect.form-select(aria-label='Default select example')
+                  label.form-label(for='microphoneSelect') &#x9EA5;&#x514B;&#x98A8;
+                  select#microphoneSelect.form-select(aria-label='Default select example')
+                  label.form-label(for='cameraSelect') &#x93E1;&#x982D;
+                  select#cameraSelect.form-select(aria-label='Default select example')
+                  label.form-label(for='hornSelect') &#x5587;&#x53ED;
+                  select#hornSelect.form-select(aria-label='Default select example')
+      .d-flex.flex-row.flex-grow-1
+        .container-fluid
+          .row
+            .col.h-100
+              .ratio.ratio-16x9
+                video#video(src='', muted)
+                .d-flex.align-items-end.justify-content-center
+                    p#caption.bg-secondary.h2.visually-hidden 字幕
+            #messege.col-2
+              .d-flex.flex-column.h-100
+                .flex-grow-1
+                  #messegeShow.bg-secondary.bg-opacity-50.p-3.mb-3.mb-md-0.me-md-3.area.w-100(style='word-break: break-all; overflow: auto; height: 87vh;')
+                .input-group.mb-3
+                  input#messegeInput.form-control(type='text', aria-describedby='messegeSend')
+                  button#messegeSend.btn.btn-dark(type='button') &#x9001;&#x51FA;
+            #staff.col-2.visually-hidden
+              #staffInner.p-3.mb-3.mb-md-0.me-md-3.w-100.area.bg-secondary.bg-opacity-50(style='word-break: break-all; overflow: auto; height: 91vh;')
+            #votePage.col-2.visually-hidden
+              .d-flex.flex-column.h-100.bg-secondary.bg-opacity-50
+                button#createVote.btn.btn-dark.my-1(type='button') &#x5275;&#x5EFA;&#x6295;&#x7968;
+                .d-flex.flex-column.flex-grow-1
+                  #voteForm.p-3.mb-3.mb-md-0.me-md-3.area.w-100(class='bg-secondary.bg-gradient', style='word-break: break-all; overflow: auto; height: 86vh;')
+            #createVoteRoom.col-2.visually-hidden
+              .d-flex.flex-column.h-100.bg-secondary.bg-opacity-50
+                button#returnVoteRoom.btn.btn-secondary.my-1(type='button') &#x8FD4;&#x56DE;
+                .d-flex.flex-column.flex-grow-1
+                  .p-3.mb-3.mb-md-0.me-md-3.area(style='word-break: break-all; overflow: auto; height: 84vh;')
+                    label.form-label(for='voteName') &#x6295;&#x7968;&#x540D;&#x7A31;
+                    input#voteName.form-control
+                    label.form-label(for='numOfVoteOptions') &#x6578;&#x91CF;
+                    select#numOfVoteOptions.form-select(aria-label='Default select example')
+                      option(value='0') 0
+                      option(value='1') 1
+                      option(value='2') 2
+                      option(value='3') 3
+                      option(value='4') 4
+                    #inputVoteOptions
+                    button#sendcCeateVote.btn.btn-dark.my-1(type='button') &#x9001;&#x51FA;
+            #filePage.col-2.visually-hidden
+              .d-flex.flex-column.h-100.bg-secondary.bg-opacity-50
+                .input-group
+                  input#uploadFile.form-control(type='file', aria-describedby='sendFile', aria-label='Upload')
+                  button#sendFile.btn.btn-dark(type='button') &#x9001;&#x51FA;
+                hr
+                .d-flex.flex-column.flex-grow-1
+                  #file.p-3.mb-3.mb-md-0.me-md-3.area(style='word-break: break-all; overflow: auto; height: 84vh;')
+            #voteRoomsPage.col-2.visually-hidden
+              .d-flex.flex-column.h-100.bg-secondary.bg-opacity-50
+                button#returnVoteRoom2.btn.btn-secondary.my-1(type='button') &#x8FD4;&#x56DE;
+                #voteRooms.d-flex.flex-column.flex-grow-1
     script.
         const ROOM_ID = "#{roomId}"
         const serverIp = "#{serverIp}"
-    script(src="/javascripts/peerjs.min.js")
-    script(src="/socket.io/socket.io.js")
-    script(src="/javascripts/script.js") 
+    script(src='/javascripts/peerjs.min.js')
+    script(src='/socket.io/socket.io.js')
+    //- script(src="https://html2canvas.hertzen.com/dist/html2canvas.min.js")
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js")
+    script(src='/javascripts/script.js')

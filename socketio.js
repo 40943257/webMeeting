@@ -12,6 +12,10 @@ const cookie = require('cookie')
 
 const courseId = 1
 
+
+if (!fs.existsSync(`./public/files`))
+    fs.mkdirSync(`./public/files`)
+
 socketio.getSocketio = (server) => {
     var io = socket_io(server, {
         maxHttpBufferSize: 1024 * 1024 * 1024

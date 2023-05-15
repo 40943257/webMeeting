@@ -109,6 +109,8 @@
         const myP = document.querySelector('#myP')
         const myVideo = document.querySelector('#myVideo')
         const mySvg = document.querySelector('#mySvg')
+        var showSleepNum = document.querySelector('#showSleepNum')
+        sleepNum = 0
 
         const clearBottomRight = () => {
             messege.classList.add('visually-hidden')
@@ -657,6 +659,20 @@
                     caption.innerHTML = captionText
                 }
             })
+
+            socket.on('sleep', () => {
+                sleepNum++
+                showSleepNum.innerHTML = sleepNum
+            })
+
+            socket.on('inSleep', () => {
+                sleepNum--
+                if(sleepNum)
+                    showSleepNum.innerHTML = sleepNum
+                else 
+                    showSleepNum = ''
+            })
+
 
             socket.on('stopStream', () => {
                 video.srcObject = null

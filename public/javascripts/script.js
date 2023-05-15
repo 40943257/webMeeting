@@ -145,7 +145,10 @@
         }
 
         messegeButton.addEventListener('click', () => {
-            if (!messegeFlag) {
+            if (messegeFlag) {
+                clearBottomRight()
+            }
+            else {
                 clearBottomRight()
                 messege.classList.remove('visually-hidden')
                 messegeButton.classList.remove('btn-secondary')
@@ -157,7 +160,6 @@
         staffButton.addEventListener('click', () => {
             if (staffFlag) {
                 clearBottomRight()
-                messegeButton.click()
             }
             else {
                 clearBottomRight()
@@ -171,7 +173,6 @@
         voteButton.addEventListener('click', () => {
             if (voteRoomsFlag) {
                 clearBottomRight()
-                messegeButton.click()
             }
             else {
                 clearBottomRight()
@@ -185,7 +186,6 @@
         createVote.addEventListener('click', () => {
             if (createVoteRoomFlag) {
                 clearBottomRight()
-                messegeButton.click()
             }
             else {
                 clearBottomRight()
@@ -230,7 +230,6 @@
         fileButton.addEventListener('click', () => {
             if (filePageeFlag) {
                 clearBottomRight()
-                messegeButton.click()
             }
             else {
                 clearBottomRight()

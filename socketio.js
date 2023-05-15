@@ -198,6 +198,14 @@ socketio.getSocketio = (server) => {
                         })
                     })
 
+                    socket.on('sleep', () => {
+                        socket.to(roomId).emit('sleep')
+                    })
+        
+                    socket.on('inSleep', () => {
+                        socket.to(roomId).emit('inSleep')
+                    })
+
                     socket.on('stopStream', () => {
                         socket.to(roomId).emit('stopStream')
                     })

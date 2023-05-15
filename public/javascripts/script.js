@@ -31,6 +31,9 @@
         const socket = io('/')
         const peers = []
         var userName = ''
+        const mic_on = '<path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0V3z"></path><path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"></path>'
+        const mic_off = '<path d="M13 8c0 .564-.094 1.107-.266 1.613l-.814-.814A4.02 4.02 0 0 0 12 8V7a.5.5 0 0 1 1 0v1zm-5 4c.818 0 1.578-.245 2.212-.667l.718.719a4.973 4.973 0 0 1-2.43.923V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 1 0v1a4 4 0 0 0 4 4zm3-9v4.879L5.158 2.037A3.001 3.001 0 0 1 11 3z"></path><path d="M9.486 10.607 5 6.12V8a3 3 0 0 0 4.486 2.607zm-7.84-9.253 12 12 .708-.708-12-12-.708.708z"></path>'
+        const svgNs = 'http://www.w3.org/2000/svg'
         const screenButtonm = document.querySelector('#screenButtonm')
         var screenStream
         const cameraButtonm = document.querySelector('#cameraButtonm')
@@ -103,6 +106,9 @@
         const body = document.body
         const bodyCanvas = document.createElement('canvas')
         const bodyCtx = bodyCanvas.getContext('2d')
+        const myP = document.querySelector('#myP')
+        const myVideo = document.querySelector('#myVideo')
+        const mySvg = document.querySelector('#mySvg')
 
         const clearBottomRight = () => {
             messege.classList.add('visually-hidden')
@@ -137,10 +143,7 @@
         }
 
         messegeButton.addEventListener('click', () => {
-            if (messegeFlag) {
-                clearBottomRight()
-            }
-            else {
+            if (!messegeFlag) {
                 clearBottomRight()
                 messege.classList.remove('visually-hidden')
                 messegeButton.classList.remove('btn-secondary')
@@ -152,6 +155,7 @@
         staffButton.addEventListener('click', () => {
             if (staffFlag) {
                 clearBottomRight()
+                messegeButton.click()
             }
             else {
                 clearBottomRight()
@@ -165,6 +169,7 @@
         voteButton.addEventListener('click', () => {
             if (voteRoomsFlag) {
                 clearBottomRight()
+                messegeButton.click()
             }
             else {
                 clearBottomRight()
@@ -178,6 +183,7 @@
         createVote.addEventListener('click', () => {
             if (createVoteRoomFlag) {
                 clearBottomRight()
+                messegeButton.click()
             }
             else {
                 clearBottomRight()
@@ -222,6 +228,7 @@
         fileButton.addEventListener('click', () => {
             if (filePageeFlag) {
                 clearBottomRight()
+                messegeButton.click()
             }
             else {
                 clearBottomRight()
@@ -377,6 +384,7 @@
             option.text = userName
             captionSelect.appendChild(option)
             socket.emit('join-room', ROOM_ID, myPeer._id, cameraPeer._id)
+            myP.innerHTML = myName
 
             myPeer.on('call', call => {
                 call.answer()
@@ -425,6 +433,11 @@
 
                         })
                     }
+
+                    if (stream.getAudioTracks().length != 0) {
+                        const userSvg = document.getElementById(call.peer).querySelector('svg')
+                        userSvg.innerHTML = mic_on
+                    }
                 })
             })
 
@@ -442,10 +455,22 @@
                 }
                 const userDiv = document.createElement('div')
                 userDiv.id = userCameraId
-                userDiv.classList.add('my1')
+                userDiv.classList.add('my-1')
                 userDiv.classList.add('border')
                 userDiv.classList.add('border-dark')
-                var p = document.createElement('p')
+                const userDiv2 = document.createElement('div')
+                userDiv2.classList.add('d-flex')
+                const userSvg = document.createElementNS(svgNs, 'svg')
+                userSvg.classList.add('bi')
+                userSvg.classList.add('bi-mic-mute-fill')
+                userSvg.classList.add('mx-1')
+                userSvg.classList.add('my-1')
+                userSvg.setAttribute('width', '16')
+                userSvg.setAttribute('height', '16')
+                userSvg.setAttribute('fill', 'currentColor')
+                userSvg.setAttribute('viewBox', '0 0 16 16')
+                userSvg.innerHTML = mic_off
+                const p = document.createElement('p')
                 p.classList.add('text-center')
                 p.classList.add('margin-bottom-0')
                 p.innerHTML = name
@@ -463,7 +488,9 @@
                 else {
                     cameraVideo.muted = false
                 }
-                userDiv.append(p)
+                userDiv2.append(userSvg)
+                userDiv2.append(p)
+                userDiv.append(userDiv2)
                 radioDiv.append(cameraVideo)
                 userDiv.append(radioDiv)
                 staffInner.append(userDiv)
@@ -544,6 +571,7 @@
                         voteRoom.classList.add('mb-3')
                         voteRoom.classList.add('mb-md-0')
                         voteRoom.classList.add('me-md-3')
+                        voteRoom.style.height = 84 + 'vh'
                         voteRooms.appendChild(voteRoom)
                         vote.addEventListener('click', () => {
                             if (voteChooseFlag[num] != 1) {
@@ -640,6 +668,8 @@
             socket.on('stopCameraStream', (userCameraId) => {
                 const userVideo = document.getElementById(userCameraId).querySelector('video')
                 userVideo.srcObject = null
+                const userSvg = document.getElementById(userCameraId).querySelector('svg')
+                userSvg.innerHTML = mic_off
 
                 if (video_startFlag) {
                     const n = peers.map(x => x.cameraId).indexOf(userCameraId)
@@ -697,7 +727,7 @@
                         video.muted = true
                         video.play()
                         sendStream(screenStream)
-                        screenButtonm.classList.remove('btn-secondary')
+                        screenButtonm.classList.remove('btn-primary')
                         screenButtonm.classList.add('btn-dark')
 
                         stream.getTracks()[0].addEventListener('ended', () => {
@@ -712,7 +742,7 @@
                     screenStream = null
                     video.srcObject = null
                     screenButtonm.classList.remove('btn-dark')
-                    screenButtonm.classList.add('btn-secondary')
+                    screenButtonm.classList.add('btn-primary')
                     socket.emit('stopStream');
                 }
             }
@@ -767,10 +797,12 @@
                     microphoneSource = null
                 }
                 cameraStream = null
+                myVideo.srcObject = null
+                mySvg.innerHTML = mic_off
                 cameraButtonm.classList.remove('btn-dark')
-                cameraButtonm.classList.add('btn-secondary')
+                cameraButtonm.classList.add('btn-primary')
                 microphoneButtonm.classList.remove('btn-dark')
-                microphoneButtonm.classList.add('btn-secondary')
+                microphoneButtonm.classList.add('btn-primary')
             }
         }
 
@@ -780,7 +812,7 @@
                     cameraStream = new MediaStream()
                     if (options.video) {
                         cameraStream.addTrack(stream.getVideoTracks()[0])
-                        cameraButtonm.classList.remove('btn-secondary')
+                        cameraButtonm.classList.remove('btn-primary')
                         cameraButtonm.classList.add('btn-dark')
                     }
                     if (options.audio) {
@@ -799,9 +831,12 @@
                             recognition.start()
                             recognizing = true
                         }
-                        microphoneButtonm.classList.remove('btn-secondary')
+                        mySvg.innerHTML = mic_on
+                        microphoneButtonm.classList.remove('btn-primary')
                         microphoneButtonm.classList.add('btn-dark')
                     }
+                    myVideo.srcObject = cameraStream
+                    myVideo.play()
                     peers.forEach(user => {
                         // console.log(user.cameraId)
                         cameraPeer.call(user.cameraId, cameraStream)
@@ -852,9 +887,11 @@
                 }
                 const userVideos = staff.querySelectorAll('video')
                 userVideos.forEach(userVideo => {
-                    userVideo.muted = false
-                    if (userVideo.srcObject && userVideo.srcObject.getAudioTracks().length) {
-                        userVideo.srcObject.getAudioTracks().forEach(track => track.enabled = true)
+                    if (userVideo.id != 'myVideo') {
+                        userVideo.muted = false
+                        if (userVideo.srcObject && userVideo.srcObject.getAudioTracks().length) {
+                            userVideo.srcObject.getAudioTracks().forEach(track => track.enabled = true)
+                        }
                     }
 
                 })
@@ -866,9 +903,11 @@
                 video.muted = true
                 const userVideos = staff.querySelectorAll('video')
                 userVideos.forEach(userVideo => {
-                    userVideo.muted = true
-                    if (userVideo.srcObject && userVideo.srcObject.getAudioTracks().length) {
-                        userVideo.srcObject.getAudioTracks().forEach(track => track.enabled = true)
+                    if (userVideo.id != 'myVideo') {
+                        userVideo.muted = true
+                        if (userVideo.srcObject && userVideo.srcObject.getAudioTracks().length) {
+                            userVideo.srcObject.getAudioTracks().forEach(track => track.enabled = true)
+                        }
                     }
                 })
             }
@@ -896,27 +935,36 @@
                 const imageData = imgCtx.getImageData(0, 0, img.width, img.height)
                 bodyCtx.putImageData(imageData, 0, 0)
 
-                var width
-                var height
-                if ((video.videoWidth / video.videoHeight) < (video.offsetWidth / video.offsetHeight)) {
-                    height = video.offsetHeight
-                    width = (height * video.videoWidth) / video.videoHeight
-                }
-                else {
-                    width = video.offsetWidth
-                    height = (width * video.videoHeight) / video.videoWidth
-                }
+                // var width
+                // var height
+                // if ((video.videoWidth / video.videoHeight) < (video.offsetWidth / video.offsetHeight)) {
+                //     height = video.offsetHeight
+                //     width = (height * video.videoWidth) / video.videoHeight
+                // }
+                // else {
+                //     width = video.offsetWidth
+                //     height = (width * video.videoHeight) / video.videoWidth
+                // }
 
-                const rect = video.getBoundingClientRect();
-                const x = rect.left + (video.offsetWidth - width) / 2
-                const y = rect.top + (video.offsetHeight - height) / 2
+                // var rect = video.getBoundingClientRect();
+                // var x = rect.left + (video.offsetWidth - width) / 2
+                // var y = rect.top + (video.offsetHeight - height) / 2
 
-                bodyCtx.drawImage(video, x, y, width, height)
+                // bodyCtx.drawImage(video, x, y, width, height)
 
+                // html2canvas(caption).then((img2) => {
+                //     rect = caption.getBoundingClientRect()
+                //     x = rect.left
+                //     y = rect.top
+                //     // console.log(x)
+                //     // console.log(y)
+                //     bodyCtx.drawImage(img2, x, y, img2.width, img2.height)
+                // })
             })
 
+
             if (video_startFlag)
-                setTimeout(draw, 1000 / 60)
+                setTimeout(draw, 10)
         }
 
         video_startButtonm.addEventListener('click', () => {
@@ -924,7 +972,7 @@
                 recorder.stop()
                 video_startFlag = false
                 video_startButtonm.classList.remove('btn-dark')
-                video_startButtonm.classList.add('btn-secondary')
+                video_startButtonm.classList.add('btn-primary')
             }
             else {
                 video_startFlag = true
@@ -976,7 +1024,7 @@
                 }
 
                 recorder.start()
-                video_startButtonm.classList.remove('btn-secondary')
+                video_startButtonm.classList.remove('btn-primary')
                 video_startButtonm.classList.add('btn-dark')
             }
         })

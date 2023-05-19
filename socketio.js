@@ -48,6 +48,7 @@ socketio.getSocketio = (server) => {
 
                     if (!(roomStaff[roomId])) {
                         roomStaff[roomId] = []
+                        roomStaff[roomId].sleepNum = 0
                         roomVote[roomId] = []
                         roomVote[roomId].voteNum = 0
                     }
@@ -66,13 +67,16 @@ socketio.getSocketio = (server) => {
                     const userInfo = {
                         name: name,
                         id: userId,
-                        cameraId: cameraId
+                        cameraId: cameraId,
+                        isSleep: false
                     }
                     if (!clientSocket[sessionId])
                         clientSocket[sessionId] = []
                     clientSocket[sessionId].push(socket)
                     roomStaff[roomId].push(userInfo)
                     // console.log(roomStaff[roomId])
+
+                    socket.emit('sleep', roomStaff[roomId].sleepNum)
 
                     let sql = `SELECT * FROM courseFile WHERE courseId='${courseId}' and courseLink = '${roomId}'`;
                     connection.query(sql, [true], (error, results, fields) => {
@@ -199,11 +203,25 @@ socketio.getSocketio = (server) => {
                     })
 
                     socket.on('sleep', () => {
-                        socket.to(roomId).emit('sleep')
+                        var n = roomStaff[roomId].map(x => x.id).indexOf(userId)
+                        if (n != -1) {
+                            if(!roomStaff[roomId][n].isSleep) {
+                                roomStaff[roomId].sleepNum++
+                                io.to(roomId).emit('sleep', roomStaff[roomId].sleepNum)
+                                roomStaff[roomId][n].isSleep = true
+                            }
+                        }
                     })
         
-                    socket.on('inSleep', () => {
-                        socket.to(roomId).emit('inSleep')
+                    socket.on('unSleep', () => {
+                        var n = roomStaff[roomId].map(x => x.id).indexOf(userId)
+                        if (n != -1) {
+                            if(roomStaff[roomId][n].isSleep) {
+                                roomStaff[roomId].sleepNum--
+                                io.to(roomId).emit('sleep', roomStaff[roomId].sleepNum)
+                                roomStaff[roomId][n].isSleep = false
+                            }
+                        }
                     })
 
                     socket.on('stopStream', () => {
@@ -217,6 +235,11 @@ socketio.getSocketio = (server) => {
                     socket.on('disconnect', () => {
                         var n = roomStaff[roomId].map(x => x.id).indexOf(userId)
                         if (n != -1) {
+                            if(roomStaff[roomId][n].isSleep) {
+                                roomStaff[roomId].sleepNum--
+                                io.to(roomId).emit('sleep', roomStaff[roomId].sleepNum)
+                            }
+                            
                             roomStaff[roomId].splice(n, 1)
                         }
                         // console.log(roomStaff[roomId])

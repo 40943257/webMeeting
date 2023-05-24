@@ -4,5 +4,5 @@ var sessionId = document.cookie.replace(/(?:(?:^|.*;\s*)PHPSESSID*\=\s*([^;]*).*
 
 socket.emit('logout', sessionId)
 socket.on('access', () => {
-    parent.window.location.assign(`http://${serverIp}/htmlPhp/loginpage.php`)
+    parent.window.location.assign(`http://${serverIp}/htmlPhp/user/loginpage.php`)
 })

@@ -20,6 +20,7 @@
     "nodemon": "^2.0.20",
     "peer": "^0.6.1",
     "socket.io": "^4.5.4",
+    "stream-buffers": "^3.0.2",
     "uuid": "^9.0.0"
   }
 }

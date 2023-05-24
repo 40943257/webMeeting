@@ -1,8 +1,8 @@
 ﻿let config = {
     host: 'localhost',
-    user: 'webMeeting',
-    password: 'webMeeting',
-    database: 'webMeeting'
+    user: 'root',
+    password: '',
+    database: 'meetingsystem'
   };
   
   module.exports = config;

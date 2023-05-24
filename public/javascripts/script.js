@@ -103,10 +103,12 @@
         recognition.continuous = true
         recognition.interimResults = true
         const captionSelect = document.querySelector('#captionSelect')
-        const body = document.body
-        const bodyCanvas = document.createElement('canvas')
-        const bodyCtx = bodyCanvas.getContext('2d')
+        const videoCanvas = document.createElement('canvas')
+        const videoCtx = videoCanvas.getContext('2d')
         const myP = document.querySelector('#myP')
+        var mixStream
+        var recorder
+        var chunks
         const myVideo = document.querySelector('#myVideo')
         const mySvg = document.querySelector('#mySvg')
         var showSleepNum = document.querySelector('#showSleepNum')
@@ -389,10 +391,6 @@
             myPeer.on('call', call => {
                 call.answer()
                 call.on('stream', userStream => {
-                    if (video_startFlag) {
-                        screenSource = audioContext.createMediaStreamSource(userStream)
-                        screenSource.connect(gainNode)
-                    }
                     video.srcObject = userStream
                     let playPromise = video.play()
                     if (playPromise !== undefined) {
@@ -659,12 +657,11 @@
             })
 
             socket.on('sleep', (sleepNum) => {
-                if(sleepNum != '0')
+                if (sleepNum != '0')
                     showSleepNum.innerHTML = sleepNum
                 else
                     showSleepNum.innerHTML = ''
             })
-
 
             socket.on('stopStream', () => {
                 video.srcObject = null
@@ -687,6 +684,10 @@
                     }
                 }
             })
+            
+            socket.on('gotChunks', () => {
+                alert('存取完成')
+            })
 
             socket.on('user-disconnected', userId => {
                 const n = peers.map(x => x.id).indexOf(userId)
@@ -707,11 +708,11 @@
             })
 
             socket.on('stopMeeting', () => {
-                parent.window.location.assign(`http://${serverIp}/htmlPhp/user.php`)
+                parent.window.location.assign(`http://${serverIp}/htmlPhp/user/userPage.php`)
             })
 
             socket.on('logout', () => {
-                parent.window.location.assign(`http://${serverIp}/htmlPhp/loginpage.php`)
+                parent.window.location.assign(`http://${serverIp}/htmlPhp/user/loginpage.php`)
             })
         })
 
@@ -728,9 +729,11 @@
                         screenStream = stream
                         video.srcObject = screenStream
 
-                        if (video_startFlag && stream.getAudioTracks()[0]) {
-                            screenSource = audioContext.createMediaStreamSource(stream)
-                            screenSource.connect(gainNode)
+                        if (video_startFlag) {
+                            if (stream.getAudioTracks()[0]) {
+                                screenSource = audioContext.createMediaStreamSource(stream)
+                                screenSource.connect(gainNode)
+                            }
                         }
                         video.muted = true
                         video.play()
@@ -936,43 +939,12 @@
         })
 
         const draw = () => {
-            html2canvas(body).then((img) => {
-                bodyCanvas.width = img.width + 1
-                bodyCanvas.height = img.height + 1
-                const imgCtx = img.getContext('2d')
-                const imageData = imgCtx.getImageData(0, 0, img.width, img.height)
-                bodyCtx.putImageData(imageData, 0, 0)
-
-                // var width
-                // var height
-                // if ((video.videoWidth / video.videoHeight) < (video.offsetWidth / video.offsetHeight)) {
-                //     height = video.offsetHeight
-                //     width = (height * video.videoWidth) / video.videoHeight
-                // }
-                // else {
-                //     width = video.offsetWidth
-                //     height = (width * video.videoHeight) / video.videoWidth
-                // }
-
-                // var rect = video.getBoundingClientRect();
-                // var x = rect.left + (video.offsetWidth - width) / 2
-                // var y = rect.top + (video.offsetHeight - height) / 2
-
-                // bodyCtx.drawImage(video, x, y, width, height)
-
-                // html2canvas(caption).then((img2) => {
-                //     rect = caption.getBoundingClientRect()
-                //     x = rect.left
-                //     y = rect.top
-                //     // console.log(x)
-                //     // console.log(y)
-                //     bodyCtx.drawImage(img2, x, y, img2.width, img2.height)
-                // })
-            })
-
+            videoCanvas.width = video.offsetWidth
+            videoCanvas.height = video.offsetHeight
+            videoCtx.drawImage(video, 0, 0, videoCanvas.width, videoCanvas.height)
 
             if (video_startFlag)
-                setTimeout(draw, 10)
+                setTimeout(draw, 100)
         }
 
         video_startButtonm.addEventListener('click', () => {
@@ -991,7 +963,7 @@
                 gainNode = audioContext.createGain()
                 gainNode.gain.value = voiceRange.value / 100
 
-                mixStream.addTrack(bodyCanvas.captureStream().getVideoTracks()[0])
+                mixStream.addTrack(videoCanvas.captureStream().getVideoTracks()[0])
                 if (video.srcObject) {
                     if (video.srcObject.getAudioTracks()[0]) {
                         screenSource = audioContext.createMediaStreamSource(video.srcObject)
@@ -1011,27 +983,40 @@
                 mixStream.addTrack(destination.stream.getAudioTracks()[0])
 
                 chunks = []
+
                 recorder = new MediaRecorder(mixStream, {
                     mimeType: 'video/webm',
                     audioBitsPerSecond: 128000,
-                    videoBitsPerSecond: 2500000
+                    videoBitsPerSecond: 2500000,
+                    ignoreMutedMedia: true
                 })
 
+                recorder.onstart = () => {
+                    const date = new Date()
+                    const time = date.toTimeString()
+                    socket.emit('recordStart', time)
+                }
+
                 recorder.ondataavailable = e => {
-                    chunks.push(e.data)
+                    // chunks.push(e.data)
+                    socket.emit('chunks', e.data)
                 }
 
                 recorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'video/webm' })
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url
-                    a.download = 'recoding.webm'
-                    a.click()
-                    URL.revokeObjectURL(url)
+                    const date = new Date()
+                    const time = date.toTimeString()
+                    socket.emit('recordStop', time)
+                    // const blob = new Blob(chunks, { type: 'video/webm' })
+                    // const url = URL.createObjectURL(blob)
+                    // const a = document.createElement('a')
+                    // a.href = url
+                    // a.download = 'recoding.webm'
+                    // a.click()
+                    // URL.revokeObjectURL(url)
                 }
 
                 recorder.start()
+
                 video_startButtonm.classList.remove('btn-primary')
                 video_startButtonm.classList.add('btn-dark')
             }

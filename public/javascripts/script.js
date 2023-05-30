@@ -112,6 +112,8 @@
         const myVideo = document.querySelector('#myVideo')
         const mySvg = document.querySelector('#mySvg')
         var showSleepNum = document.querySelector('#showSleepNum')
+        var recordStartTime
+        var recordEndTime
 
         const clearBottomRight = () => {
             messege.classList.add('visually-hidden')
@@ -365,7 +367,11 @@
             if (cameraStream) {
                 cameraStop()
                 if (options.video != false) {
-                    options.video = { deviceId: cameraSelect.value }
+                    options.video = {
+                        width: 256,
+                        height: 144,
+                        deviceId: cameraSelect.value
+                    }
                 }
                 sendCameraStream()
             }
@@ -684,7 +690,7 @@
                     }
                 }
             })
-            
+
             socket.on('gotChunks', () => {
                 alert('存取完成')
             })
@@ -772,7 +778,11 @@
                 }
 
                 if (options.video === false) {
-                    options.video = { deviceId: cameraSelect.value }
+                    options.video = {
+                        width: 256,
+                        height: 144,
+                        deviceId: cameraSelect.value
+                    }
                 }
                 else {
                     options.video = false
@@ -820,6 +830,7 @@
         const sendCameraStream = () => {
             if (options.video || options.audio) {
                 navigator.mediaDevices.getUserMedia(options).then(stream => {
+                    console.log(stream)
                     cameraStream = new MediaStream()
                     if (options.video) {
                         cameraStream.addTrack(stream.getVideoTracks()[0])
@@ -992,9 +1003,13 @@
                 })
 
                 recorder.onstart = () => {
-                    const date = new Date()
-                    const time = date.toTimeString()
-                    socket.emit('recordStart', time)
+                    const now = new Date();
+                    const hours = now.getHours();
+                    const minutes = now.getMinutes();
+                    const seconds = now.getSeconds();
+
+                    recordStartTime = `${hours}:${minutes}:${seconds}`
+                    socket.emit('recordStart')
                 }
 
                 recorder.ondataavailable = e => {
@@ -1003,9 +1018,13 @@
                 }
 
                 recorder.onstop = () => {
-                    const date = new Date()
-                    const time = date.toTimeString()
-                    socket.emit('recordStop', time)
+                    const now = new Date();
+                    const hours = now.getHours();
+                    const minutes = now.getMinutes();
+                    const seconds = now.getSeconds();
+
+                    recordEndTime = `${hours}:${minutes}:${seconds}`
+                    socket.emit('recordStop', recordStartTime, recordEndTime)
                     // const blob = new Blob(chunks, { type: 'video/webm' })
                     // const url = URL.createObjectURL(blob)
                     // const a = document.createElement('a')

@@ -245,15 +245,11 @@ socketio.getSocketio = (server) => {
                         })
                     })
 
-                    socket.on('recordStart', (time) => {
+                    socket.on('recordStart', () => {
                         recorderNum++
-                        recordStartTime = time
                     })
 
-                    socket.on('recordStop', (time) => {
-                        recordStartTime = time
-                        recordStartTime = null
-                        console.log(chunks.length)
+                    socket.on('recordStop', (recordStartTime, recordEndTime) => {
                         if (chunks.length > 0) {
                             const chunks2 = chunks
                             chunks = []
@@ -268,14 +264,17 @@ socketio.getSocketio = (server) => {
                             // 取得完整的 Blob
                             const blob = buffer.getContents();
 
+                            if (!fs.existsSync(`${filePath}/${roomId}/record`))
+                                fs.mkdirSync(`${filePath}/${roomId}/record`)
+
                             fs.writeFile(`${filePath}/${roomId}/record/record${recorderNum}.webm`, blob, err => {
                                 if (err) {
                                     console.error(err)
                                     return
                                 }
 
-                                let sql = `INSERT INTO courseRecord(courseId, fileName, filePath)
-                                                    VALUES('${roomId}', 'record${recorderNum}.webm', '${filePath}/${roomId}/record')`
+                                let sql = `INSERT INTO courseRecord(courseId, fileName, recordStart, recordEnd, filePath)
+                                                    VALUES('${roomId}', 'record${recorderNum}.webm', '${recordStartTime}', '${recordEndTime}', '${filePath}/${roomId}/record')`
                                 connection.query(sql);
                             })
                         }

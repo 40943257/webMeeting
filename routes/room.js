@@ -14,29 +14,56 @@ router.get('/:room', (req, res, next) => {
 
     if (results.length > 0) {
       const now = new Date()
-      const courseDateStart = new Date(`${results[0]['courseDateStart']}`)
-      courseDateStart.setDate(courseDateStart.getDate() + 1)
-      const datePart1 = courseDateStart.toISOString().split("T")[0];
+      const courseDateStart = new Date()
+      courseDateStart.setTime(results[0].courseDateStart)
+      let [hour, minute, second] = results[0].courseTimeStart.split(":")
+      courseDateStart.setHours(hour)
+      courseDateStart.setMinutes(minute)
+      courseDateStart.setSeconds(second)
 
-      const courseDateEnd = new Date(`${results[0]['courseDateEnd']}`)
-      courseDateEnd.setDate(courseDateEnd.getDate() + 1)
-      const datePart2 = courseDateEnd.toISOString().split("T")[0];
+      const courseDateEnd = new Date()
+      courseDateEnd.setTime(results[0].courseDateEnd)
+      let [hour2, minute2, second2] = results[0].courseTimeEnd.split(":")
+      courseDateEnd.setHours(hour2)
+      courseDateEnd.setMinutes(minute2)
+      courseDateEnd.setSeconds(second2)
 
-      const startTime = new Date(`${datePart1}T${results[0]['courseTimeStart']}`)
-      const endTime = new Date(`${datePart2}T${results[0]['courseTimeEnd']}`)
+      // console.log(courseDateStart.toString())
+      // console.log(courseDateEnd.toString())
 
-      if (now >= startTime && now <= endTime) {
-        let sql = `SELECT * FROM cookiedata WHERE phpSessionId = '${req.cookies["PHPSESSID"]}'`
-        connection.query(sql, [true], (error, results, fields) => {
+      if (now >= courseDateStart && now <= courseDateEnd) {
+        let sql = `SELECT userAccount FROM cookiedata WHERE phpSessionId = '${req.cookies["PHPSESSID"]}'`
+        connection.query(sql, [true], (error, results2, fields) => {
           if (error) {
             return console.error(error.message);
           }
-          console.log(results.length)
-          if (results.length > 0) {
-            res.render('room/roomId', {
-              roomId: req.params.room,
-              serverIp: serverIp
-            })
+
+          if (results2.length > 0) {
+            if (results[0].openCourse == 1) {
+              res.render('room/roomId', {
+                roomId: req.params.room,
+                serverIp: serverIp
+              })
+            }
+            else {
+              sql = `SELECT userInfo.userClass
+                          FROM userInfo INNER JOIN coursemember ON userInfo.userClass = coursemember.courseMember 
+                          WHERE coursemember.courseId ='${req.params.room}' and userInfo.userAccount = '${results2.userAccount}'`
+              connection.query(sql, [true], (error, results3, fields) => {
+                if (error) {
+                  res.send('error')
+                }
+                console.log(results3.length)
+                if (results3.length > 0) {
+                  res.render('room/roomId', {
+                    roomId: req.params.room,
+                    serverIp: serverIp
+                  })
+                }
+                else
+                  res.redirect(`http://${serverIp}/htmlphp/user/joinPage.php`)
+              })
+            }
           }
           else
             res.redirect(`http://${serverIp}/htmlphp/user/loginpage.php`)
@@ -56,20 +83,6 @@ router.get('/:room', (req, res, next) => {
     else
       res.redirect(`http://${serverIp}/htmlphp/user/joinPage.php`)
   })
-  /*let sql = `SELECT * FROM cookiedata WHERE phpSessionId = '${req.cookies["PHPSESSID"]}'`
-  connection.query(sql, [true], (error, results, fields) => {
-      if (error) {
-          return console.error(error.message);
-      }
-      // console.log(results.length)
-      if(results.length > 0)
-        res.('room/roomId', { 
-          roomId: req.params.room, 
-          serverIp: serverIp
-        })
-      else
-        res.redirect(`http://${serverIp}/htmlphp/loginpage.php`)
-    })*/
 });
 
 module.exports = router;

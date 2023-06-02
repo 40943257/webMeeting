@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const cookie = require('cookie')
 const { WritableStreamBuffer } = require('stream-buffers');
-const filePath = './public/files'
+const filePath = 'C:/xampp/htdocs/htmlPhp/files'
 
 if (!fs.existsSync(`${filePath}`))
     fs.mkdirSync(`${filePath}`)
@@ -43,48 +43,6 @@ socketio.getSocketio = (server) => {
                 const name = results[0]['userName']
                 socket.emit('name', name)
                 socket.on('join-room', (roomId, userId, cameraId) => {
-
-                    let sql2 = `SELECT * FROM courseInfo WHERE courseId = '${roomId}'`
-                    connection.query(sql2, [true], (error, results, fields) => {
-                        const now = new Date()
-
-                        const courseDateEnd = new Date(`${results[0]['courseDateEnd']}`)
-                        courseDateEnd.setDate(courseDateEnd.getDate() + 1)
-                        const datePart2 = courseDateEnd.toISOString().split("T")[0];
-                        const endTime = new Date(`${datePart2}T${results[0]['courseTimeEnd']}`)
-
-                        setTimeout(
-                            function () {
-                                socket.emit('stopMeeting')
-                                if (roomVote[roomId].voteNum > 0) {
-                                    if (!fs.existsSync(`${filePath}/${roomId}/vote`))
-                                        fs.mkdirSync(`${filePath}/${roomId}/vote`)
-                                    const fileName = `vote_${Date.now()}.json`
-
-                                    fs.writeFile(`${filePath}/${roomId}/vote/${fileName}`, JSON.stringify(roomVote[roomId]), err => {
-                                        if (err) {
-                                            console.error(err)
-                                            return
-                                        }
-
-                                        let sql2 = `SELECT * FROM coursevote WHERE courseId = '${roomId}'`;
-                                        connection.query(sql2, [true], (error, results, fields) => {
-                                            if (error) {
-                                                return console.error(error.message);
-                                            }
-                                            if (Object.keys(results).length == 0) {
-                                                let sql = `INSERT INTO coursevote(courseId, fileName, filePath)
-                                                                VALUES('${roomId}', '${fileName}', '${filePath}/${roomId}/vote')`
-                                                connection.query(sql)
-                                            }
-                                        });
-                                    })
-                                }
-                            },
-                            endTime - now
-                        )
-                    })
-
                     socket.join(roomId)
                     socket.to(roomId).emit('connection', userId, cameraId, name)
 
